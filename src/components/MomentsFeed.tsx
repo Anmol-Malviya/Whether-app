@@ -214,7 +214,7 @@ export default function MomentsFeed({ location }: { location: string }) {
           borderRadius: "var(--radius)",
         }}
       >
-        Weather photos for <strong style={{ color: "var(--text-secondary)" }}>{location}</strong> · Approximate location only · Auto-expires after 60 min
+        Weather photos for <strong style={{ color: "var(--text-secondary)" }}>{location === "current-location" ? "Nearby / All Recent" : location}</strong> · Approximate location only · Auto-expires after 60 min
       </div>
 
       {loading && (

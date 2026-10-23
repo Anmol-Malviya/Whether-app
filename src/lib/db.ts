@@ -1,4 +1,12 @@
 import mongoose from "mongoose";
+import dns from "dns";
+
+// Ensure Node.js resolves MongoDB SRV records reliably across Windows networks
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {
+  // Ignore in environments where setServers is restricted
+}
 
 const MONGODB_URI = process.env.MONGODB_URI;
 

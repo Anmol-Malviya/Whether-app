@@ -35,14 +35,30 @@ export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
     const now = new Date();
-    const moments = await Moment.find({
-      approximateLocation: { $regex: location, $options: "i" },
+    // If location is 'current-location', 'all', or empty/default, fetch all active moments.
+    // Otherwise filter by location regex, or fallback to all moments if specific location has none.
+    const filter: Record<string, unknown> = {
       expiresAt: { $gt: now }, // FR-026: strict expiry filtering
       moderationStatus: "approved",
-    })
+    };
+
+    if (location && location !== "current-location" && location !== "all") {
+      filter.approximateLocation = { $regex: location, $options: "i" };
+    }
+
+    let moments = await Moment.find(filter)
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
+
+    // Fallback: If no moments found for the exact neighborhood/city filter, show recent community moments
+    if (moments.length === 0 && filter.approximateLocation) {
+      delete filter.approximateLocation;
+      moments = await Moment.find(filter)
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
+    }
 
     return Response.json({ moments, generatedAt: now.toISOString() });
   } catch (err) {
