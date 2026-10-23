@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import LocationSelector, { LocationOption } from "./LocationSelector";
 
 type Tab = "dashboard" | "sources" | "moments";
 
@@ -15,12 +15,10 @@ interface NavbarProps {
   onTabChange: (tab: Tab) => void;
   locationName: string;
   coords?: { lat?: number; lon?: number; name?: string } | null;
-  onSelectLocation?: (loc: import("./LocationSelector").LocationOption) => void;
+  onSelectLocation?: (loc: LocationOption) => void;
   onUseCurrentLocation?: () => void;
   isLocating?: boolean;
 }
-
-import LocationSelector from "./LocationSelector";
 
 export default function Navbar({
   activeTab,
