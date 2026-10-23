@@ -206,7 +206,7 @@ export default function IncidentMap({ clusters, userCoords, onSelectCluster }: I
   }, [clusters, userCoords, mapLoaded]);
 
   return (
-    <div style={{ position: "relative", width: "100%", borderRadius: 20, overflow: "hidden", border: "1px solid #E2E8F0" }}>
+    <div style={{ position: "relative", width: "100%", borderRadius: 20, overflow: "hidden", border: "1px solid #E2E8F0", isolation: "isolate", zIndex: 1 }}>
       {/* Map Header Overlay */}
       <div
         style={{
@@ -214,7 +214,7 @@ export default function IncidentMap({ clusters, userCoords, onSelectCluster }: I
           top: 12,
           left: 12,
           right: 12,
-          zIndex: 500,
+          zIndex: 20,
           background: "rgba(255, 255, 255, 0.92)",
           backdropFilter: "blur(8px)",
           borderRadius: 14,
@@ -267,7 +267,7 @@ export default function IncidentMap({ clusters, userCoords, onSelectCluster }: I
             bottom: 12,
             left: 12,
             right: 12,
-            zIndex: 500,
+            zIndex: 25,
             background: "#FFFFFF",
             borderRadius: 14,
             padding: "10px 14px",
