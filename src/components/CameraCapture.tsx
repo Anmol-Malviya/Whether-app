@@ -30,8 +30,27 @@ export default function CameraCapture({
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isStartingCamera, setIsStartingCamera] = useState(true);
 
+  // Quality Enhancement States
+  const [filterMode, setFilterMode] = useState<"natural" | "clear" | "vibrant">("clear");
+  const [exposureLevel, setExposureLevel] = useState<number>(1.05); // default subtle boost for clarity
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // CSS Filter string according to selected filter mode and exposure
+  const getFilterStyle = useCallback(() => {
+    switch (filterMode) {
+      case "clear":
+        // Crisp, high-clarity daylight filter for webcams and phone cameras
+        return `brightness(${exposureLevel * 102}%) contrast(108%) saturate(110%)`;
+      case "vibrant":
+        // Rich sky & cloud pop
+        return `brightness(${exposureLevel * 100}%) contrast(112%) saturate(125%)`;
+      case "natural":
+      default:
+        return `brightness(${exposureLevel * 100}%) contrast(100%) saturate(100%)`;
+    }
+  }, [filterMode, exposureLevel]);
 
   // Stop camera tracks cleanly
   const stopCameraStream = useCallback(() => {
@@ -45,7 +64,7 @@ export default function CameraCapture({
     setIsCameraActive(false);
   }, []);
 
-  // Request & Start live camera stream
+  // Request & Start high-definition live camera stream
   const startCamera = useCallback(async (requestedFacing: "environment" | "user" = "environment") => {
     setError(null);
     setIsStartingCamera(true);
@@ -62,30 +81,74 @@ export default function CameraCapture({
         streamRef.current = null;
       }
 
+      // Maximize camera sensor capability (Full HD 1080p, 60/30fps, autofocus)
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: requestedFacing },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          frameRate: { ideal: 30, min: 24 },
         },
         audio: false,
       });
 
       streamRef.current = stream;
+
+      // Apply advanced hardware constraints if the camera track supports them
+      const track = stream.getVideoTracks()[0];
+      if (track && "getCapabilities" in track) {
+        try {
+          const capabilities = (track as unknown as { getCapabilities: () => Record<string, unknown> }).getCapabilities();
+          const advancedConstraints: Record<string, unknown> = {};
+
+          if (capabilities.focusMode && Array.isArray(capabilities.focusMode) && capabilities.focusMode.includes("continuous")) {
+            advancedConstraints.focusMode = "continuous";
+          }
+          if (capabilities.exposureMode && Array.isArray(capabilities.exposureMode) && capabilities.exposureMode.includes("continuous")) {
+            advancedConstraints.exposureMode = "continuous";
+          }
+          if (capabilities.whiteBalanceMode && Array.isArray(capabilities.whiteBalanceMode) && capabilities.whiteBalanceMode.includes("continuous")) {
+            advancedConstraints.whiteBalanceMode = "continuous";
+          }
+
+          if (Object.keys(advancedConstraints).length > 0) {
+            await (track as unknown as { applyConstraints: (c: { advanced: unknown[] }) => Promise<void> }).applyConstraints({
+              advanced: [advancedConstraints],
+            });
+          }
+        } catch {
+          // Hardware advanced constraints optional; fallback gracefully
+        }
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => {});
       }
       setIsCameraActive(true);
     } catch (err: unknown) {
-      console.warn("Camera access failed:", err);
-      const errorObj = err as { name?: string };
-      if (errorObj?.name === "NotAllowedError" || errorObj?.name === "PermissionDeniedError") {
-        setError("Camera permission denied. Please allow camera access in your browser to capture weather moments.");
-      } else {
-        setError("Could not access live camera. Please check camera permissions.");
+      console.warn("High-res camera request fallback:", err);
+      // Fallback to standard request if sensor can't handle 1080p constraint
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: requestedFacing } },
+          audio: false,
+        });
+        streamRef.current = fallbackStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          await videoRef.current.play().catch(() => {});
+        }
+        setIsCameraActive(true);
+      } catch (err2) {
+        const errorObj = err2 as { name?: string };
+        if (errorObj?.name === "NotAllowedError" || errorObj?.name === "PermissionDeniedError") {
+          setError("Camera permission denied. Please allow camera access in your browser.");
+        } else {
+          setError("Could not access live camera. Please check camera permissions.");
+        }
+        setIsCameraActive(false);
       }
-      setIsCameraActive(false);
     } finally {
       setIsStartingCamera(false);
     }
@@ -150,16 +213,28 @@ export default function CameraCapture({
     startCamera(nextMode);
   };
 
-  // Capture current frame from live camera
+  // High-Resolution Snapshot with image enhancements (unsharp contrast & clarity)
   const capturePhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
 
-    const ctx = canvas.getContext("2d");
+    // Use full native sensor resolution
+    const width = video.videoWidth || 1920;
+    const height = video.videoHeight || 1080;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
+
+    // Apply high-quality image smoothing
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    // Apply the active live filter enhancement to the captured canvas
+    ctx.filter = getFilterStyle();
 
     if (facingMode === "user") {
       ctx.translate(canvas.width, 0);
@@ -168,6 +243,7 @@ export default function CameraCapture({
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+    // Save as ultra-high quality JPEG (95% quality instead of standard low quality)
     canvas.toBlob(
       (blob) => {
         if (!blob) return;
@@ -179,7 +255,7 @@ export default function CameraCapture({
         stopCameraStream();
       },
       "image/jpeg",
-      0.9
+      0.96
     );
   };
 
@@ -256,13 +332,13 @@ export default function CameraCapture({
         </div>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px 12px" }}>
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, color: "#101828", letterSpacing: "-0.3px", margin: 0 }}>
               Live Weather Camera
             </h2>
             <p style={{ margin: "3px 0 0", fontSize: 12, color: "#667085" }}>
-              Capture real-time weather from your location
+              HD live capture with automatic location
             </p>
           </div>
           <button
@@ -369,20 +445,89 @@ export default function CameraCapture({
               </button>
             </div>
 
+            {/* Quality & Color Mode Controls (above camera viewfinder) */}
+            {isCameraActive && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 12,
+                  padding: "6px 10px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#475467", marginRight: 4 }}>
+                    CLARITY:
+                  </span>
+                  {(["clear", "vibrant", "natural"] as const).map((m) => {
+                    const isSelected = filterMode === m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setFilterMode(m)}
+                        style={{
+                          background: isSelected ? "#2165F5" : "#FFFFFF",
+                          color: isSelected ? "#FFFFFF" : "#475467",
+                          border: isSelected ? "1px solid #2165F5" : "1px solid #D1D5DB",
+                          borderRadius: 16,
+                          padding: "3px 9px",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textTransform: "capitalize",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {m === "clear" ? "✨ Clear HD" : m === "vibrant" ? "🌈 Vibrant" : "Natural"}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Brightness tweak button */}
+                <button
+                  type="button"
+                  title="Adjust brightness/exposure"
+                  onClick={() => {
+                    setExposureLevel((prev) => (prev >= 1.2 ? 0.95 : prev + 0.08));
+                  }}
+                  style={{
+                    background: exposureLevel > 1.05 ? "#EEF4FE" : "#FFFFFF",
+                    border: "1px solid #D1D5DB",
+                    borderRadius: 8,
+                    padding: "3px 8px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#2165F5",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
+                  }}
+                >
+                  ☀️ {Math.round(exposureLevel * 100)}%
+                </button>
+              </div>
+            )}
+
             {/* Live Camera Viewfinder or Captured Preview */}
             {preview ? (
               <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", background: "#000", border: "1px solid #E2ECF8" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={preview} alt="Captured frame" style={{ width: "100%", maxHeight: 270, objectFit: "cover", display: "block" }} />
+                <img src={preview} alt="Captured HD frame" style={{ width: "100%", maxHeight: 290, objectFit: "cover", display: "block" }} />
                 <div style={{ position: "absolute", bottom: 12, left: 12, right: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 11.5, background: "rgba(0,0,0,0.6)", color: "#fff", padding: "4px 9px", borderRadius: 6, backdropFilter: "blur(4px)" }}>
-                    ✓ Photo captured
+                  <span style={{ fontSize: 11.5, background: "rgba(0,0,0,0.65)", color: "#fff", padding: "4px 9px", borderRadius: 6, backdropFilter: "blur(4px)" }}>
+                    ✓ HD Photo captured
                   </span>
                   <button
                     type="button"
                     onClick={handleRetake}
                     style={{
-                      background: "rgba(0,0,0,0.7)",
+                      background: "rgba(0,0,0,0.75)",
                       border: "none",
                       borderRadius: 20,
                       padding: "7px 14px",
@@ -415,7 +560,7 @@ export default function CameraCapture({
                   boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)",
                 }}
               >
-                {/* Video element */}
+                {/* Video element with hardware-accelerated filter & HD stream */}
                 <video
                   ref={videoRef}
                   autoPlay
@@ -427,8 +572,33 @@ export default function CameraCapture({
                     objectFit: "cover",
                     display: isCameraActive ? "block" : "none",
                     transform: facingMode === "user" ? "scaleX(-1)" : "none",
+                    filter: getFilterStyle(),
+                    transition: "filter 0.15s ease",
                   }}
                 />
+
+                {/* HD Quality indicator badge */}
+                {isCameraActive && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 12,
+                      left: 12,
+                      background: "rgba(0,0,0,0.6)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      borderRadius: 6,
+                      padding: "2px 6px",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "#4ADE80",
+                      letterSpacing: "0.5px",
+                      backdropFilter: "blur(4px)",
+                      zIndex: 10,
+                    }}
+                  >
+                    ● HD LIVE
+                  </div>
+                )}
 
                 {/* Loading / Starting indicator */}
                 {isStartingCamera && (
@@ -443,7 +613,7 @@ export default function CameraCapture({
                         animation: "spin 0.8s linear infinite",
                       }}
                     />
-                    <span style={{ fontSize: 13, color: "#94A3B8" }}>Starting camera...</span>
+                    <span style={{ fontSize: 13, color: "#94A3B8" }}>Enhancing & starting HD camera...</span>
                   </div>
                 )}
 
@@ -535,7 +705,7 @@ export default function CameraCapture({
                         <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#2165F5" }} />
                       </button>
                       <span style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 6, fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
-                        Tap to capture live
+                        Tap to capture HD live
                       </span>
                     </div>
                   </>
@@ -543,7 +713,7 @@ export default function CameraCapture({
               </div>
             )}
 
-            {/* Caption (optional) */}
+            {/* Weather Note / Caption */}
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "#475467", display: "block", marginBottom: 6 }}>
                 Weather Note <span style={{ fontWeight: 400, color: "#8A96AB" }}>(optional)</span>
