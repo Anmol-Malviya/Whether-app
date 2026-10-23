@@ -8,7 +8,15 @@ export const metadata: Metadata = {
   keywords: "weather, Indore, weather app, multi-source, weather confidence, WeatherPulse",
   authors: [{ name: "WeatherPulse" }],
   manifest: "/manifest.json",
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: [
+      { url: "/app-icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" }
+    ],
+    apple: [
+      { url: "/app-icon.svg" }
+    ]
+  },
   openGraph: {
     title: "WeatherPulse",
     description: "Honest, multi-source weather intelligence for Indore",

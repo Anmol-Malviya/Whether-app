@@ -9,6 +9,18 @@
   "orientation": "portrait-primary",
   "icons": [
     {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
       "src": "/favicon.ico",
       "sizes": "48x48",
       "type": "image/x-icon"

@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F8FAFC" />
+    </linearGradient>
+
+    <!-- Sun Radial Gradient -->
+    <radialGradient id="sunGrad" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#FFF275" />
+      <stop offset="45%" stop-color="#FFB300" />
+      <stop offset="100%" stop-color="#F57C00" />
+    </radialGradient>
+
+    <!-- Sun Glow / Ambient -->
+    <filter id="sunGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Cloud Body Gradient (Fluffy, warm light on top, gentle lavender/sky shadow below) -->
+    <linearGradient id="cloudGrad" x1="20%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="55%" stop-color="#F4F8FD" />
+      <stop offset="85%" stop-color="#E2EEFC" />
+      <stop offset="100%" stop-color="#D0E3FA" />
+    </linearGradient>
+
+    <!-- Drop Shadow for 3D Cloud Floating -->
+    <filter id="cloudShadow" x="-25%" y="-20%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#1E3A8A" flood-opacity="0.13" />
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0284C7" flood-opacity="0.08" />
+    </filter>
+
+    <!-- Soft Cloud Ground Contact Shadow -->
+    <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0F172A" stop-opacity="0.16" />
+      <stop offset="60%" stop-color="#1E293B" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Sunglasses Frame Gradient -->
+    <linearGradient id="glassesFrame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#090D16" />
+    </linearGradient>
+
+    <!-- Sunglasses Lens Gradient (Cool Cyan to Deep Indigo Violet) -->
+    <linearGradient id="lensGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4" />
+      <stop offset="35%" stop-color="#3B82F6" />
+      <stop offset="80%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4338CA" />
+    </linearGradient>
+
+    <!-- Droplet Gradient -->
+    <linearGradient id="dropGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#67E8F9" />
+      <stop offset="60%" stop-color="#0EA5E9" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <!-- Bolt/Spark Gradient -->
+    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Cheek Blush -->
+    <radialGradient id="blushPink" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF6B8B" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#FF6B8B" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- 1. Crisp Pure White Rounded Base / Icon Frame -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- 2. Ambient Ground Shadow under Cloud -->
+  <ellipse cx="256" cy="426" rx="140" ry="24" fill="url(#groundShadow)" />
+
+  <!-- 3. The Happy Golden Sun Behind Cloud -->
+  <g id="sunGroup">
+    <!-- Sun Outer Glow Circle -->
+    <circle cx="340" cy="180" r="92" fill="#FEF08A" opacity="0.45" filter="url(#sunGlow)" />
+    
+    <!-- Warm Sun Rays with Rounded Ends -->
+    <g stroke="#F59E0B" stroke-width="12" stroke-linecap="round" opacity="0.9">
+      <line x1="340" y1="62" x2="340" y2="40" />
+      <line x1="424" y1="96" x2="442" y2="82" />
+      <line x1="458" y1="180" x2="480" y2="180" />
+      <line x1="424" y1="264" x2="442" y2="278" />
+      <line x1="256" y1="96" x2="238" y2="82" />
+      <line x1="340" y1="298" x2="340" y2="318" />
+    </g>
+
+    <!-- Main Sun Sphere -->
+    <circle cx="340" cy="180" r="74" fill="url(#sunGrad)" />
+    <!-- Sun Inner Soft Specular Highlight -->
+    <circle cx="316" cy="154" r="26" fill="#FFFFFF" opacity="0.4" />
+  </g>
+
+  <!-- 4. Cute Floating 3D Cloud with Shadow -->
+  <g id="cloudGroup" filter="url(#cloudShadow)">
+    <!-- Multi-puff seamless organic cloud path -->
+    <path d="
+      M 160 368
+      L 348 368
+      A 58 58 0 0 0 398 288
+      A 64 64 0 0 0 354 184
+      A 74 74 0 0 0 234 162
+      A 78 78 0 0 0 134 246
+      A 62 62 0 0 0 160 368
+      Z
+    " fill="url(#cloudGrad)" />
+
+    <!-- Top highlight overlay for glossy 3D feel -->
+    <path d="
+      M 148 240
+      A 66 66 0 0 1 234 174
+      A 68 68 0 0 1 346 194
+      A 54 54 0 0 1 382 258
+      C 356 220 290 200 220 214
+      C 176 222 152 238 148 240
+      Z
+    " fill="#FFFFFF" opacity="0.65" />
+  </g>
+
+  <!-- 5. Cute & Cool Face -->
+  <!-- Rosy Cute Cheeks -->
+  <ellipse cx="182" cy="296" rx="22" ry="14" fill="url(#blushPink)" />
+  <ellipse cx="326" cy="296" rx="22" ry="14" fill="url(#blushPink)" />
+
+  <!-- Happy Smiling Mouth -->
+  <path d="M 234 300 Q 254 322 274 300" stroke="#1E293B" stroke-width="6.5" stroke-linecap="round" fill="none" />
+  <!-- Tongue pop inside smile -->
+  <path d="M 244 308 Q 254 319 264 308 Q 254 316 244 308" fill="#F43F5E" opacity="0.85" />
+
+  <!-- 6. Cool Sunglasses -->
+  <g id="sunglasses" transform="translate(0, -6)">
+    <!-- Bridge connection -->
+    <path d="M 238 246 Q 254 240 270 246" stroke="#0F172A" stroke-width="12" stroke-linecap="round" fill="none" />
+    <path d="M 238 246 Q 254 240 270 246" stroke="#475569" stroke-width="3" stroke-linecap="round" fill="none" />
+
+    <!-- Left Frame Outer -->
+    <rect x="160" y="222" width="80" height="52" rx="22" fill="url(#glassesFrame)" />
+    <!-- Left Lens -->
+    <rect x="165" y="227" width="70" height="42" rx="17" fill="url(#lensGrad)" />
+    <!-- Left Lens Sleek White Glare Reflections -->
+    <path d="M 174 233 L 186 233 L 176 261 L 169 261 Z" fill="#FFFFFF" opacity="0.6" />
+    <path d="M 191 233 L 198 233 L 188 261 L 183 261 Z" fill="#FFFFFF" opacity="0.4" />
+
+    <!-- Right Frame Outer -->
+    <rect x="268" y="222" width="80" height="52" rx="22" fill="url(#glassesFrame)" />
+    <!-- Right Lens -->
+    <rect x="273" y="227" width="70" height="42" rx="17" fill="url(#lensGrad)" />
+    <!-- Right Lens Sleek White Glare Reflections -->
+    <path d="M 282 233 L 294 233 L 284 261 L 277 261 Z" fill="#FFFFFF" opacity="0.6" />
+    <path d="M 299 233 L 306 233 L 296 261 L 291 261 Z" fill="#FFFFFF" opacity="0.4" />
+
+    <!-- Sunglasses frame subtle edge bevels -->
+    <circle cx="168" cy="230" r="2.5" fill="#94A3B8" />
+    <circle cx="340" cy="230" r="2.5" fill="#94A3B8" />
+  </g>
+
+  <!-- 7. Whimsical Weather Elements (Sparkle + Water drop) -->
+  <!-- Cute bouncing water drop on bottom-left -->
+  <g transform="translate(142, 382)">
+    <path d="M 12 0 C 12 0 0 16 0 24 C 0 31 5.4 36 12 36 C 18.6 36 24 31 24 24 C 24 16 12 0 12 0 Z" fill="url(#dropGrad)" />
+    <!-- Specular highlight on drop -->
+    <ellipse cx="8" cy="22" rx="3.5" ry="6" fill="#FFFFFF" opacity="0.6" transform="rotate(-20 8 22)" />
+  </g>
+
+  <!-- Cool Golden Weather Pulse Spark / Star on top right -->
+  <g transform="translate(390, 138) scale(0.9)">
+    <path d="
+      M 16 0
+      Q 16 16 32 16
+      Q 16 16 16 32
+      Q 16 16 0 16
+      Q 16 16 16 0
+      Z
+    " fill="url(#sparkGrad)" />
+    <circle cx="16" cy="16" r="3" fill="#FFFFFF" />
+  </g>
+
+  <!-- Tiny sparkle near the left cheek -->
+  <g transform="translate(122, 210) scale(0.6)">
+    <path d="
+      M 16 0
+      Q 16 16 32 16
+      Q 16 16 16 32
+      Q 16 16 0 16
+      Q 16 16 16 0
+      Z
+    " fill="#38BDF8" opacity="0.8" />
+  </g>
+</svg>
