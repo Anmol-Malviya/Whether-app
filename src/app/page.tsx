@@ -7,13 +7,14 @@ import SourceBreakdown from "@/components/SourceBreakdown";
 import MomentsFeed from "@/components/MomentsFeed";
 import Navbar from "@/components/Navbar";
 import CameraCapture from "@/components/CameraCapture";
+import OfficerTriagePanel from "@/components/OfficerTriagePanel";
 
 export default function HomePage() {
   const [weather, setWeather] = useState<WeatherAggregation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "sources" | "moments">(
+  const [activeTab, setActiveTab] = useState<"dashboard" | "sources" | "moments" | "triage">(
     "dashboard"
   );
   const [location, setLocation] = useState("indore");
@@ -195,6 +196,12 @@ export default function HomePage() {
         {activeTab === "moments" && (
           <div className="fade-up">
             <MomentsFeed location={location} />
+          </div>
+        )}
+
+        {activeTab === "triage" && (
+          <div className="fade-up">
+            <OfficerTriagePanel location={location} />
           </div>
         )}
       </main>

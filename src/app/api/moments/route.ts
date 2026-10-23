@@ -81,7 +81,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const caption = (formData.get("caption") as string | null) ?? "";
     const location = (formData.get("location") as string | null) ?? "Indore (City Center)";
+    const latStr = formData.get("lat") as string | null;
+    const lonStr = formData.get("lon") as string | null;
+    const clientIncidentType = (formData.get("incidentType") as string | null) || "normal";
     const file = formData.get("image") as File | null;
+
+    const lat = latStr ? parseFloat(latStr) : undefined;
+    const lon = lonStr ? parseFloat(lonStr) : undefined;
 
     // Validation (FR-030)
     if (!file) {
@@ -143,9 +149,25 @@ export async function POST(request: NextRequest) {
 
     const imageUrl = uploadResult.secure_url;
 
+    // ── Groq Vision AI Analysis ──────────────────────────────────────────
+    let groqAnalysis = null;
+    try {
+      const { analyzeWeatherMomentWithGroq } = await import("@/lib/groqVision");
+      groqAnalysis = await analyzeWeatherMomentWithGroq(imageUrl, caption, location);
+    } catch (gErr) {
+      console.warn("[POST /api/moments] Groq analysis warning:", gErr);
+    }
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + MOMENT_EXPIRY_MS);
+
+    // Determine final incident type and moderation status from Groq AI insights
+    const finalIncidentType =
+      groqAnalysis?.incidentType && groqAnalysis.incidentType !== "normal"
+        ? groqAnalysis.incidentType
+        : clientIncidentType;
+
+    const isFakeOrIrrelevant = groqAnalysis && !groqAnalysis.isValidWeatherPhoto;
 
     await connectToDatabase();
     const moment = await Moment.create({
@@ -154,14 +176,22 @@ export async function POST(request: NextRequest) {
       caption: caption.trim() || undefined,
       imageUrl,
       approximateLocation: location,
+      coordinates: lat && lon ? { lat, lon } : undefined,
+      incidentType: finalIncidentType,
       createdAt: now,
       expiresAt,
       analysisStatus: "completed",
       analysisResult: {
-        skyCondition: "unknown",
-        detectedObjects: [],
-        confidenceScore: 0,
+        skyCondition: groqAnalysis?.skyCondition || "live_report",
+        detectedObjects: groqAnalysis?.detectedHazards || (finalIncidentType !== "normal" ? [finalIncidentType] : []),
+        visiblePrecipitation: groqAnalysis?.waterloggingDetected || finalIncidentType === "heavy_rain",
+        ocrExtractedText: groqAnalysis?.ocrExtractedText || "",
+        confidenceScore: groqAnalysis?.confidenceScore || 70,
+        isSuspectedStaleOrOld: isFakeOrIrrelevant,
+        aiSummary: groqAnalysis?.aiSummary || undefined,
+        waterDepthEstimate: groqAnalysis?.waterDepthEstimate || "none",
       },
+      verificationStatus: isFakeOrIrrelevant ? "stale_or_duplicate" : "unverified",
       moderationStatus: "approved",
     });
 

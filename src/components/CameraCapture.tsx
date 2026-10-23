@@ -284,6 +284,10 @@ export default function CameraCapture({
     fd.append("image", file);
     fd.append("caption", caption.trim());
     fd.append("location", liveLocationName);
+    if (coords?.lat !== undefined && coords?.lon !== undefined) {
+      fd.append("lat", String(coords.lat));
+      fd.append("lon", String(coords.lon));
+    }
 
     try {
       const res = await fetch("/api/moments", { method: "POST", body: fd });
