@@ -124,8 +124,21 @@ export default function IncidentMap({ clusters, userCoords, onSelectCluster }: I
 
       const userMarker = L.marker([userCoords.lat, userCoords.lon], { icon: userIcon })
         .addTo(map)
-        .bindPopup(`<b>Your Live Location</b><br/>${userCoords.name || "Indore GPS"}`);
+        .bindPopup(`<b>Your Live Exact Location</b><br/>${userCoords.name || "Exact GPS"}<br/><span style="font-size:11px;color:#64748B;">${userCoords.lat.toFixed(5)}, ${userCoords.lon.toFixed(5)}</span>`);
       markersRef.current.push(userMarker);
+
+      // Add a subtle GPS accuracy circle around user location
+      const userCircle = L.circle([userCoords.lat, userCoords.lon], {
+        color: "#2165F5",
+        fillColor: "#2165F5",
+        fillOpacity: 0.12,
+        radius: 100,
+        weight: 1.5,
+      }).addTo(map);
+      markersRef.current.push(userCircle);
+
+      // Pan to user's exact location
+      map.setView([userCoords.lat, userCoords.lon], 15);
     }
 
     // Add incident markers & cluster radius zones
@@ -200,7 +213,7 @@ export default function IncidentMap({ clusters, userCoords, onSelectCluster }: I
       markersRef.current.push(circle);
     });
 
-    if (clusters.length > 0 && !userCoords) {
+    if (clusters.length > 0 && (!userCoords || !userCoords.lat)) {
       map.setView([clusters[0].coordinates.lat, clusters[0].coordinates.lon], 13);
     }
   }, [clusters, userCoords, mapLoaded]);

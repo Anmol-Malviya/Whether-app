@@ -166,19 +166,15 @@ export default function CameraCapture({
       async (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
-        let resolved = `Current Location (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+        let resolved = `Live Location (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
 
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
-            { headers: { "Accept-Language": "en" } }
-          );
+          const res = await fetch(`/api/geocode/reverse?lat=${lat}&lon=${lon}`);
           if (res.ok) {
             const data = await res.json();
-            const addr = data.address;
-            const area = addr?.suburb || addr?.neighbourhood || addr?.residential || addr?.quarter;
-            const city = addr?.city || addr?.town || addr?.state_district || "Indore";
-            resolved = area ? `${area}, ${city}` : city;
+            if (data.displayName) {
+              resolved = data.displayName;
+            }
           }
         } catch {
           // fallback
@@ -192,7 +188,7 @@ export default function CameraCapture({
         setLiveLocationName(coords?.name || "Indore (City Center)");
         setIsDetectingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   }, [coords?.name]);
 
