@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import IncidentMap from "./IncidentMap";
 
 export interface IncidentCluster {
   id: string;
@@ -34,15 +35,37 @@ interface TriageStats {
 
 interface OfficerTriagePanelProps {
   location: string;
+  coords?: { lat?: number; lon?: number; name?: string } | null;
   onRefresh?: () => void;
 }
 
-export default function OfficerTriagePanel({ location }: OfficerTriagePanelProps) {
+export default function OfficerTriagePanel({ location, coords }: OfficerTriagePanelProps) {
   const [clusters, setClusters] = useState<IncidentCluster[]>([]);
   const [stats, setStats] = useState<TriageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState<"all" | "critical" | "corroborated" | "stale">("all");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [broadcastAlert, setBroadcastAlert] = useState<{ active: boolean; message?: string }>({ active: false });
+
+  // Export incident dossier for municipal coordination
+  const exportDossierJSON = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(
+      JSON.stringify({
+        generatedAt: new Date().toISOString(),
+        location,
+        coordinates: coords,
+        stats,
+        incidents: clusters,
+      }, null, 2)
+    );
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `WeatherPulse_Incident_Dossier_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
 
   const fetchTriageData = useCallback(async () => {
     try {
@@ -175,53 +198,202 @@ export default function OfficerTriagePanel({ location }: OfficerTriagePanelProps
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          background: "#F1F5F9",
-          padding: 4,
-          borderRadius: 14,
-          marginBottom: 16,
-        }}
-      >
-        {(
-          [
-            { id: "all", label: `All (${clusters.length})` },
-            { id: "critical", label: "Critical" },
-            { id: "corroborated", label: "Corroborated" },
-            { id: "stale", label: "Flagged Stale" },
-          ] as const
-        ).map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setFilterTab(t.id)}
+        {/* Filter Tabs & View Mode Switcher */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+          <div
             style={{
               flex: 1,
-              padding: "7px 4px",
-              fontSize: 11,
-              fontWeight: 700,
-              borderRadius: 10,
-              border: "none",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-              background: filterTab === t.id ? "#FFFFFF" : "transparent",
-              color: filterTab === t.id ? "#0F172A" : "#64748B",
-              boxShadow: filterTab === t.id ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+              display: "flex",
+              gap: 4,
+              background: "#F1F5F9",
+              padding: 3,
+              borderRadius: 12,
             }}
           >
-            {t.label}
-          </button>
-        ))}
-      </div>
+            {(
+              [
+                { id: "all", label: `All (${clusters.length})` },
+                { id: "critical", label: "Critical" },
+                { id: "corroborated", label: "Corroborated" },
+                { id: "stale", label: "Stale" },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setFilterTab(t.id)}
+                style={{
+                  flex: 1,
+                  padding: "6px 2px",
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  borderRadius: 8,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  background: filterTab === t.id ? "#FFFFFF" : "transparent",
+                  color: filterTab === t.id ? "#0F172A" : "#64748B",
+                  boxShadow: filterTab === t.id ? "0 2px 5px rgba(0,0,0,0.06)" : "none",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
 
-      {/* Clusters List */}
-      {loading && clusters.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 20px", color: "#64748B", fontSize: 13 }}>
-          Analyzing crowd reports and clustering active incidents...
+          {/* List vs Map Switcher */}
+          <div style={{ display: "flex", background: "#F1F5F9", padding: 3, borderRadius: 12, gap: 2 }}>
+            <button
+              onClick={() => setViewMode("list")}
+              title="List View"
+              style={{
+                padding: "6px 9px",
+                borderRadius: 8,
+                border: "none",
+                background: viewMode === "list" ? "#FFFFFF" : "transparent",
+                color: viewMode === "list" ? "#2165F5" : "#64748B",
+                cursor: "pointer",
+                boxShadow: viewMode === "list" ? "0 2px 5px rgba(0,0,0,0.06)" : "none",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode("map")}
+              title="Geospatial Map View"
+              style={{
+                padding: "6px 9px",
+                borderRadius: 8,
+                border: "none",
+                background: viewMode === "map" ? "#FFFFFF" : "transparent",
+                color: viewMode === "map" ? "#2165F5" : "#64748B",
+                cursor: "pointer",
+                boxShadow: viewMode === "map" ? "0 2px 5px rgba(0,0,0,0.06)" : "none",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                <line x1="8" y1="2" x2="8" y2="18"></line>
+                <line x1="16" y1="6" x2="16" y2="22"></line>
+              </svg>
+            </button>
+          </div>
         </div>
-      ) : filteredClusters.length === 0 ? (
+
+        {/* Operational Toolbar (Export & Broadcast) */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <button
+            onClick={exportDossierJSON}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              borderRadius: 10,
+              padding: "7px 10px",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#334155",
+              cursor: "pointer",
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export Dossier
+          </button>
+
+          <button
+            onClick={() => setBroadcastAlert({
+              active: true,
+              message: `WeatherPulse Flash Alert: Severe waterlogging & localized inundation confirmed across ${location.toUpperCase()}. Caution advised on arterial routes.`,
+            })}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              background: broadcastAlert.active ? "#FEF2F2" : "#FFF7ED",
+              border: broadcastAlert.active ? "1px solid #FCA5A5" : "1px solid #FED7AA",
+              borderRadius: 10,
+              padding: "7px 10px",
+              fontSize: 11,
+              fontWeight: 700,
+              color: broadcastAlert.active ? "#DC2626" : "#C2410C",
+              cursor: "pointer",
+            }}
+          >
+            <span>📢</span>
+            {broadcastAlert.active ? "Alert Broadcasting" : "Broadcast Advisory"}
+          </button>
+        </div>
+
+        {/* Flash Advisory Banner if active */}
+        {broadcastAlert.active && (
+          <div
+            style={{
+              background: "#FEF2F2",
+              border: "1px solid #F87171",
+              borderRadius: 12,
+              padding: "10px 14px",
+              marginBottom: 16,
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 8,
+              boxShadow: "0 4px 12px rgba(239, 68, 68, 0.12)",
+            }}
+          >
+            <div style={{ fontSize: 11.5, color: "#991B1B", lineHeight: 1.4 }}>
+              <strong>🚨 Public Advisory Broadcasted:</strong> {broadcastAlert.message}
+            </div>
+            <button
+              onClick={() => setBroadcastAlert({ active: false })}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#991B1B",
+                fontWeight: 700,
+                cursor: "pointer",
+                padding: 0,
+                fontSize: 12,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Map View Mode */}
+        {viewMode === "map" && (
+          <div style={{ marginBottom: 16 }}>
+            <IncidentMap clusters={filteredClusters} userCoords={coords} />
+          </div>
+        )}
+
+        {/* Clusters List (Shown if list mode) */}
+        {viewMode === "list" && (
+          loading && clusters.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 20px", color: "#64748B", fontSize: 13 }}>
+              Analyzing crowd reports and clustering active incidents...
+            </div>
+          ) : filteredClusters.length === 0 ? (
         <div
           style={{
             background: "#FFFFFF",
@@ -514,6 +686,7 @@ export default function OfficerTriagePanel({ location }: OfficerTriagePanelProps
             );
           })}
         </div>
+        )
       )}
     </div>
   );

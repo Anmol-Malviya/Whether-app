@@ -201,7 +201,7 @@ export default function HomePage() {
 
         {activeTab === "triage" && (
           <div className="fade-up">
-            <OfficerTriagePanel location={location} />
+            <OfficerTriagePanel location={location} coords={coords} />
           </div>
         )}
       </main>

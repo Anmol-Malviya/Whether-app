@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import LocationSelector, { LocationOption } from "./LocationSelector";
 
 type Tab = "dashboard" | "sources" | "moments" | "triage";
@@ -30,6 +31,10 @@ export default function Navbar({
   onUseCurrentLocation,
   isLocating,
 }: NavbarProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   // Format coordinates string for location bar
   const latStr = coords?.lat !== undefined ? coords.lat.toFixed(2) : "22.76";
   const lonStr = coords?.lon !== undefined ? coords.lon.toFixed(2) : "75.89";
@@ -322,12 +327,16 @@ export default function Navbar({
                     }}
                   />
                 )}
-                <div style={{ transform: isActive ? "scale(1.05)" : "scale(1)", transition: "transform 0.15s" }}>
-                  {tab.id === "dashboard" ? (
+                <div
+                  suppressHydrationWarning
+                  style={{ transform: isActive ? "scale(1.05)" : "scale(1)", transition: "transform 0.15s" }}
+                >
+                  {tab.id === "dashboard" && (
                     <svg width="22" height="22" viewBox="0 0 24 24" fill={isActive ? "#2165F5" : "none"} stroke="#2165F5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
                     </svg>
-                  ) : tab.id === "sources" ? (
+                  )}
+                  {tab.id === "sources" && (
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="18" cy="5" r="3" />
                       <circle cx="6" cy="12" r="3" />
@@ -335,11 +344,17 @@ export default function Navbar({
                       <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                       <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                     </svg>
-                  ) : (
+                  )}
+                  {tab.id === "moments" && (
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="3" ry="3" />
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  )}
+                  {tab.id === "triage" && (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill={isActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
                   )}
                 </div>
