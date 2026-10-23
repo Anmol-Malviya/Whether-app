@@ -13,16 +13,57 @@ const NEIGHBORHOODS = [
   "Geeta Bhawan", "Rau", "Khajrana", "LIG Colony", "Bhawarkuan", "Indore (General Area)",
 ];
 
-function getNeighborhoodFromCoords(lat: number, lng: number): string {
-  if (lat > 22.73 && lat < 22.76 && lng > 75.88 && lng < 75.93) return "Vijay Nagar";
-  if (lat > 22.71 && lat < 22.74 && lng > 75.87 && lng < 75.91) return "Palasia";
-  if (lat > 22.71 && lat < 22.73 && lng > 75.85 && lng < 75.88) return "Rajwada Area";
-  if (lat > 22.74 && lat < 22.77 && lng > 75.85 && lng < 75.89) return "Geeta Bhawan";
-  if (lat > 22.68 && lat < 22.72 && lng > 75.86 && lng < 75.90) return "Rau";
-  if (lat > 22.69 && lat < 22.73 && lng > 75.90 && lng < 75.95) return "Khajrana";
-  if (lat > 22.72 && lat < 22.76 && lng > 75.82 && lng < 75.87) return "LIG Colony";
-  if (lat > 22.74 && lat < 22.78 && lng > 75.90 && lng < 75.95) return "Bhawarkuan";
-  return "Indore (General Area)";
+// Real landmarks coordinates in Indore
+const INDORE_LANDMARKS: { name: string; lat: number; lng: number }[] = [
+  { name: "Vijay Nagar", lat: 22.7533, lng: 75.8937 },
+  { name: "Palasia", lat: 22.7244, lng: 75.8839 },
+  { name: "Geeta Bhawan", lat: 22.7180, lng: 75.8820 },
+  { name: "Rajwada Area", lat: 22.7196, lng: 75.8577 },
+  { name: "Bhawarkuan", lat: 22.6926, lng: 75.8676 },
+  { name: "Khajrana", lat: 22.7297, lng: 75.9080 },
+  { name: "LIG Colony", lat: 22.7380, lng: 75.8840 },
+  { name: "Rau", lat: 22.6288, lng: 75.8052 },
+];
+
+function getNearestNeighborhood(lat: number, lng: number): string {
+  let closest = "Indore (City Center)";
+  let minDistance = Infinity;
+
+  for (const landmark of INDORE_LANDMARKS) {
+    const dLat = lat - landmark.lat;
+    const dLng = lng - landmark.lng;
+    const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+    if (dist < minDistance) {
+      minDistance = dist;
+      closest = landmark.name;
+    }
+  }
+
+  // If within ~15km radius of Indore
+  return minDistance < 0.25 ? closest : "Indore (General Area)";
+}
+
+async function fetchAreaName(lat: number, lng: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const addr = data.address;
+      const detected = addr?.suburb || addr?.neighbourhood || addr?.residential || addr?.quarter || addr?.city_district;
+      if (detected) {
+        // Match with known list if possible or use clean name
+        const match = NEIGHBORHOODS.find(n => n.toLowerCase().includes(detected.toLowerCase()) || detected.toLowerCase().includes(n.toLowerCase()));
+        if (match) return match;
+        return detected;
+      }
+    }
+  } catch {
+    // Fallback to nearest landmark
+  }
+  return getNearestNeighborhood(lat, lng);
 }
 
 export default function CameraCapture({ onClose, onSuccess }: CameraCaptureProps) {
@@ -73,14 +114,15 @@ export default function CameraCapture({ onClose, onSuccess }: CameraCaptureProps
     if (!navigator.geolocation) { setGeoStatus("denied"); return; }
     setGeoStatus("loading");
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setGeoCoords(coords);
-        setNeighborhood(getNeighborhoodFromCoords(coords.lat, coords.lng));
+        const resolvedName = await fetchAreaName(coords.lat, coords.lng);
+        setNeighborhood(resolvedName);
         setGeoStatus("ok");
       },
       () => { setGeoStatus("denied"); },
-      { timeout: 8000, enableHighAccuracy: true }
+      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
     );
   }, []);
 

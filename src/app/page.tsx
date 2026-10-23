@@ -105,14 +105,32 @@ export default function HomePage() {
     }
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         setIsLocating(false);
         const userLat = pos.coords.latitude;
         const userLon = pos.coords.longitude;
+
+        let resolvedName = `Current Location (${userLat.toFixed(2)}, ${userLon.toFixed(2)})`;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLon}&zoom=14&addressdetails=1`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address;
+            const area = addr?.suburb || addr?.neighbourhood || addr?.residential || addr?.quarter;
+            const city = addr?.city || addr?.town || addr?.state_district || "Indore";
+            resolvedName = area ? `${area}, ${city}` : city;
+          }
+        } catch {
+          // fallback to coordinates label
+        }
+
         const targetCoords = {
           lat: userLat,
           lon: userLon,
-          name: `Current Location (${userLat.toFixed(2)}, ${userLon.toFixed(2)})`,
+          name: resolvedName,
         };
         setCoords(targetCoords);
         setLocation("current-location");
@@ -123,7 +141,7 @@ export default function HomePage() {
         setIsLocating(false);
         fetchWeather("indore", null);
       },
-      { timeout: 8000, enableHighAccuracy: true }
+      { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
     );
   }, [fetchWeather]);
 
