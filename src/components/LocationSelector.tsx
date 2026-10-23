@@ -60,7 +60,7 @@ export default function LocationSelector({
   };
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", width: "100%" }}>
       {/* Trigger */}
       {customTrigger ? (
         customTrigger(() => setOpen((v) => !v))
@@ -221,9 +221,6 @@ export default function LocationSelector({
           </div>
         </>
       )}
-
-      {/* Spin keyframe */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
