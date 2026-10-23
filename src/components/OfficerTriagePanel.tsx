@@ -403,9 +403,28 @@ export default function OfficerTriagePanel({ location, coords }: OfficerTriagePa
             border: "1px dashed #CBD5E1",
           }}
         >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>🛡️</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#1E293B", marginBottom: 4 }}>
-            No Matching Incidents
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              margin: "0 auto 12px",
+              borderRadius: "50%",
+              background: "#F0FDF4",
+              border: "1px solid #BBF7D0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#16A34A",
+              boxShadow: "0 4px 12px rgba(22, 163, 74, 0.1)",
+            }}
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "#1E293B", marginBottom: 4, letterSpacing: -0.2 }}>
+            All Clear — No Matching Incidents
           </div>
           <div style={{ fontSize: 12, color: "#64748B" }}>
             No unhandled weather or waterlogging incidents found in this filter category.

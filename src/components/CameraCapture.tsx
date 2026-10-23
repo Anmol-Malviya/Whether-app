@@ -462,9 +462,9 @@ export default function CameraCapture({
                   padding: "6px 10px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#475467", marginRight: 4 }}>
-                    CLARITY:
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, color: "#64748B", letterSpacing: 0.5, textTransform: "uppercase", marginRight: 2 }}>
+                    Clarity:
                   </span>
                   {(["clear", "vibrant", "natural"] as const).map((m) => {
                     const isSelected = filterMode === m;
@@ -474,46 +474,56 @@ export default function CameraCapture({
                         type="button"
                         onClick={() => setFilterMode(m)}
                         style={{
-                          background: isSelected ? "#2165F5" : "#FFFFFF",
+                          background: isSelected ? "#0F172A" : "#FFFFFF",
                           color: isSelected ? "#FFFFFF" : "#475467",
-                          border: isSelected ? "1px solid #2165F5" : "1px solid #D1D5DB",
-                          borderRadius: 16,
-                          padding: "3px 9px",
+                          border: isSelected ? "1px solid #0F172A" : "1px solid #CBD5E1",
+                          borderRadius: 8,
+                          padding: "4px 10px",
                           fontSize: 11,
                           fontWeight: 600,
                           cursor: "pointer",
-                          textTransform: "capitalize",
                           transition: "all 0.15s ease",
                         }}
                       >
-                        {m === "clear" ? "✨ Clear HD" : m === "vibrant" ? "🌈 Vibrant" : "Natural"}
+                        {m === "clear" ? "HD Enhanced" : m === "vibrant" ? "High Contrast" : "Standard"}
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Brightness tweak button */}
+                {/* Exposure control button with professional SVG icon */}
                 <button
                   type="button"
-                  title="Adjust brightness/exposure"
+                  title="Exposure adjustment"
                   onClick={() => {
                     setExposureLevel((prev) => (prev >= 1.2 ? 0.95 : prev + 0.08));
                   }}
                   style={{
-                    background: exposureLevel > 1.05 ? "#EEF4FE" : "#FFFFFF",
-                    border: "1px solid #D1D5DB",
+                    background: exposureLevel > 1.05 ? "#F1F5F9" : "#FFFFFF",
+                    border: "1px solid #CBD5E1",
                     borderRadius: 8,
-                    padding: "3px 8px",
+                    padding: "4px 8px",
                     fontSize: 11,
                     fontWeight: 600,
-                    color: "#2165F5",
+                    color: "#0F172A",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
-                    gap: 3,
+                    gap: 4,
                   }}
                 >
-                  ☀️ {Math.round(exposureLevel * 100)}%
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                  <span>{Math.round(exposureLevel * 100)}%</span>
                 </button>
               </div>
             )}
