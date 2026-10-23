@@ -30,7 +30,11 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -38,6 +42,7 @@ body {
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.6;
+  overflow-x: hidden;
 }
 
 /* ── Cards ── */
@@ -218,10 +223,9 @@ body {
 /* ── FAB: move above bottom nav on mobile ── */
 @media (max-width: 639px) {
   #fab-camera-btn {
-    bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
     right: 16px !important;
-    width: 54px !important;
-    height: 54px !important;
+    width: 50px !important;
+    height: 50px !important;
   }
 }
 

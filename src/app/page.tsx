@@ -154,7 +154,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", paddingBottom: "env(safe-area-inset-bottom, 0px)", width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
       <Navbar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -172,7 +172,7 @@ export default function HomePage() {
         }}
       />
 
-      <main style={{ maxWidth: 520, margin: "0 auto", padding: "0 16px 90px" }}>
+      <main style={{ width: "100%", maxWidth: 440, padding: "0 16px 110px", boxSizing: "border-box" }}>
         {activeTab === "dashboard" && (
           <div className="fade-up">
             <WeatherHero
@@ -201,36 +201,48 @@ export default function HomePage() {
 
       {/* ── Floating Blue Camera Button (above bottom nav on bottom-right) ── */}
       {!showCamera && (
-        <div style={{ maxWidth: 520, margin: "0 auto", position: "relative" }}>
-          <button
-            id="fab-camera-btn"
-            onClick={() => setShowCamera(true)}
-            title="Share a moment"
-            style={{
-              position: "fixed",
-              bottom: "calc(74px + env(safe-area-inset-bottom, 0px))",
-              // Align to right edge of 520px max-width container or right 20px on mobile
-              right: "max(20px, calc(50% - 240px))",
-              zIndex: 200,
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              background: "#2165F5",
-              border: "3px solid #FFFFFF",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 16px rgba(33, 101, 245, 0.35)",
-              color: "#ffffff",
-              transition: "transform 0.15s ease, box-shadow 0.15s ease",
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-          </button>
+        <div
+          style={{
+            position: "fixed",
+            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: 440,
+            pointerEvents: "none",
+            zIndex: 150,
+          }}
+        >
+          <div style={{ position: "relative", width: "100%", height: 0 }}>
+            <button
+              id="fab-camera-btn"
+              onClick={() => setShowCamera(true)}
+              title="Share a moment"
+              style={{
+                position: "absolute",
+                right: 18,
+                bottom: 0,
+                width: 52,
+                height: 52,
+                borderRadius: "50%",
+                background: "#2165F5",
+                border: "3px solid #FFFFFF",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 6px 20px rgba(33, 101, 245, 0.4)",
+                color: "#ffffff",
+                pointerEvents: "auto",
+                transition: "transform 0.15s ease, box-shadow 0.15s ease",
+              }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 

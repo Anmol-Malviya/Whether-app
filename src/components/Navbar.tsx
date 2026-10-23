@@ -38,18 +38,18 @@ export default function Navbar({
 
   return (
     <>
-      {/* ── Top Header Bar ── */}
-      <header
-        style={{
-          background: "#FFFFFF",
-          padding: "14px 20px 10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          maxWidth: 520,
-          margin: "0 auto",
-        }}
-      >
+      {/* ── Top Header Bar (Full width white bar with centered container) ── */}
+      <div style={{ width: "100%", background: "#FFFFFF", borderBottom: "1px solid #EEF3FA" }}>
+        <header
+          style={{
+            maxWidth: 440,
+            margin: "0 auto",
+            padding: "14px 16px 10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
         {/* Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Sun icon */}
@@ -138,16 +138,19 @@ export default function Navbar({
           </div>
         </div>
       </header>
+      </div>
 
       {/* ── Location Selector Bar matching screenshot ── */}
       <div
         style={{
-          maxWidth: 520,
+          width: "100%",
+          maxWidth: 440,
           margin: "6px auto 14px",
           padding: "0 16px",
           display: "flex",
           alignItems: "center",
           gap: 10,
+          boxSizing: "border-box",
         }}
       >
         {onSelectLocation && onUseCurrentLocation ? (
@@ -275,7 +278,7 @@ export default function Navbar({
       >
         <div
           style={{
-            maxWidth: 520,
+            maxWidth: 440,
             width: "100%",
             display: "flex",
             alignItems: "stretch",

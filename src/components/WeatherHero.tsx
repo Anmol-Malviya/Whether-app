@@ -638,11 +638,8 @@ export default function WeatherHero({
             </div>
 
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#101828", lineHeight: 1.2 }}>
-                Confidence
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#101828", lineHeight: 1.2 }}>
-                Score
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#101828", whiteSpace: "nowrap" }}>
+                Confidence Score
               </div>
             </div>
           </div>
