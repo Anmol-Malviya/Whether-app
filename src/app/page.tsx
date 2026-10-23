@@ -5,7 +5,6 @@ import { WeatherAggregation } from "@/lib/types/weather";
 import WeatherHero from "@/components/WeatherHero";
 import SourceBreakdown from "@/components/SourceBreakdown";
 import MomentsFeed from "@/components/MomentsFeed";
-import UploadMoment from "@/components/UploadMoment";
 import Navbar from "@/components/Navbar";
 import CameraCapture from "@/components/CameraCapture";
 
@@ -14,14 +13,13 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "sources" | "moments" | "share">(
+  const [activeTab, setActiveTab] = useState<"dashboard" | "sources" | "moments">(
     "dashboard"
   );
   const [location, setLocation] = useState("indore");
   const [coords, setCoords] = useState<{ lat?: number; lon?: number; name?: string } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-  const [fabPulse, setFabPulse] = useState(false);
 
   const locationRef = useRef(location);
   const coordsRef = useRef(coords);
@@ -155,15 +153,6 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Subtle pulse on FAB every 8 seconds to draw attention
-  useEffect(() => {
-    const id = setInterval(() => {
-      setFabPulse(true);
-      setTimeout(() => setFabPulse(false), 800);
-    }, 8000);
-    return () => clearInterval(id);
-  }, []);
-
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <Navbar
@@ -206,62 +195,34 @@ export default function HomePage() {
             <MomentsFeed location={location} />
           </div>
         )}
-
-        {activeTab === "share" && (
-          <div className="fade-up">
-            <UploadMoment
-              location={location}
-              onSuccess={() => setActiveTab("moments")}
-            />
-          </div>
-        )}
       </main>
 
-      {/* ── Floating Camera Button (bottom-right) ── */}
+      {/* ── Minimal Floating Camera Button (bottom-right) ── */}
       {!showCamera && (
         <button
           id="fab-camera-btn"
           onClick={() => setShowCamera(true)}
-          title="Capture & share a weather moment"
+          title="Share a moment"
           style={{
             position: "fixed",
-            bottom: 80,
-            right: 20,
+            bottom: 76,
+            right: 18,
             zIndex: 200,
-            width: 58,
-            height: 58,
+            width: 48,
+            height: 48,
             borderRadius: "50%",
-            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+            background: "#2563eb",
             border: "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 4px 20px rgba(37,99,235,0.45), 0 2px 8px rgba(0,0,0,0.15)",
-            transform: fabPulse ? "scale(1.12)" : "scale(1)",
-            transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s",
-            color: "#fff",
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 24px rgba(37,99,235,0.55), 0 3px 10px rgba(0,0,0,0.2)";
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-            (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(37,99,235,0.45), 0 2px 8px rgba(0,0,0,0.15)";
+            boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+            color: "#ffffff",
           }}
         >
-          {/* Ripple ring */}
-          <span style={{
-            position: "absolute",
-            inset: -4,
-            borderRadius: "50%",
-            border: "2px solid rgba(37,99,235,0.35)",
-            animation: "fab-ring 2.5s ease-out infinite",
-            pointerEvents: "none",
-          }} />
-          {/* Camera icon */}
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {/* Simple Clean Camera icon */}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
           </svg>
