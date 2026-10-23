@@ -96,7 +96,12 @@ export default function CameraCapture({ onClose, onSuccess }: CameraCaptureProps
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        videoRef.current.play().catch((err: unknown) => {
+          // Ignore AbortError when play() is interrupted by quick re-render or stop
+          if (err instanceof Error && err.name !== "AbortError") {
+            console.warn("Video play interrupted:", err);
+          }
+        });
       }
     } catch {
       setCameraError("Camera access denied. Please allow camera permission.");
