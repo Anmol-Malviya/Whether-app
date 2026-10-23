@@ -1,0 +1,19 @@
+{
+  "name": "WeatherPulse",
+  "short_name": "WeatherPulse",
+  "description": "Multi-source weather intelligence for Indore",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#0a0f1e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["weather", "utilities"],
+  "lang": "en-IN"
+}
