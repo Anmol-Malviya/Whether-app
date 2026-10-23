@@ -250,6 +250,7 @@ export default function HomePage() {
       {showCamera && (
         <CameraCapture
           location={location}
+          coords={coords}
           onClose={() => setShowCamera(false)}
           onSuccess={() => {
             setShowCamera(false);
