@@ -27,16 +27,20 @@ export const PRESET_CITIES: LocationOption[] = [
 
 interface LocationSelectorProps {
   currentLocationName: string;
+  coordsText?: string;
   onSelectLocation: (loc: LocationOption) => void;
   onUseCurrentLocation: () => void;
   isLocating?: boolean;
+  customTrigger?: (open: () => void) => React.ReactNode;
 }
 
 export default function LocationSelector({
   currentLocationName,
+  coordsText,
   onSelectLocation,
   onUseCurrentLocation,
   isLocating = false,
+  customTrigger,
 }: LocationSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -47,41 +51,45 @@ export default function LocationSelector({
   );
 
   return (
-    <div style={{ position: "relative" }}>
-      {/* Pill button that opens modal / dropdown */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        id="location-picker-btn"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: "var(--accent-light, #eff6ff)",
-          border: "1px solid rgba(37,99,235,0.2)",
-          borderRadius: 20,
-          padding: "4px 10px",
-          color: "var(--accent, #2563eb)",
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: "pointer",
-          maxWidth: 190,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          transition: "all 0.15s",
-        }}
-        title="Change location"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-        </svg>
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-          {currentLocationName.split(",")[0]}
-        </span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0, opacity: 0.7 }}>
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
+    <div style={{ position: "relative", width: customTrigger ? "100%" : "auto" }}>
+      {customTrigger ? (
+        customTrigger(() => setIsOpen(true))
+      ) : (
+        /* Pill button that opens modal / dropdown */
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          id="location-picker-btn"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--accent-light, #eff6ff)",
+            border: "1px solid rgba(37,99,235,0.2)",
+            borderRadius: 20,
+            padding: "4px 10px",
+            color: "var(--accent, #2563eb)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            maxWidth: 190,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            transition: "all 0.15s",
+          }}
+          title="Change location"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+          </svg>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+            {currentLocationName.split(",")[0]}
+          </span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0, opacity: 0.7 }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      )}
 
       {/* Dropdown Menu */}
       {isOpen && (
