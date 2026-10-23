@@ -51,6 +51,11 @@ export async function DELETE(
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (moment.imageUrl) {
+      const { deleteFromCloudinary } = await import("@/lib/cloudinary");
+      await deleteFromCloudinary(moment.imageUrl, moment.imagePublicId);
+    }
+
     await Moment.deleteOne({ _id: id });
     return Response.json({ message: "Moment deleted successfully" });
   } catch (err) {

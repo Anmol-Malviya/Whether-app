@@ -5,6 +5,7 @@ export interface IMoment extends Document {
   userName: string;
   caption?: string;
   imageUrl: string;
+  imagePublicId?: string;
   approximateLocation: string;
   coordinates?: {
     lat: number;
@@ -37,6 +38,7 @@ const MomentSchema: Schema = new Schema(
     userName: { type: String, required: true, default: "Indori Observer" },
     caption: { type: String, maxlength: 280 },
     imageUrl: { type: String, required: true },
+    imagePublicId: { type: String },
     approximateLocation: { type: String, required: true, default: "Indore (City Center)" },
     coordinates: {
       lat: { type: Number },

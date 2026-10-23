@@ -33,6 +33,11 @@ export async function GET(request: NextRequest) {
   const location = searchParams.get("location") ?? "indore";
 
   try {
+    // Non-blocking trigger: clean up any expired moments (>60 min) from DB and Cloudinary
+    import("@/lib/cleanupExpiredMoments")
+      .then((m) => m.cleanupExpiredMoments())
+      .catch((e) => console.error("[GET /api/moments] Auto-cleanup error:", e));
+
     await connectToDatabase();
     const now = new Date();
     // If location is 'current-location', 'all', or empty/default, fetch all active moments.
@@ -148,6 +153,7 @@ export async function POST(request: NextRequest) {
     );
 
     const imageUrl = uploadResult.secure_url;
+    const imagePublicId = uploadResult.public_id;
 
     // ── Groq Vision AI Analysis ──────────────────────────────────────────
     let groqAnalysis = null;
@@ -175,6 +181,7 @@ export async function POST(request: NextRequest) {
       userName: "Indori Observer",
       caption: caption.trim() || undefined,
       imageUrl,
+      imagePublicId,
       approximateLocation: location,
       coordinates: lat && lon ? { lat, lon } : undefined,
       incidentType: finalIncidentType,
