@@ -45,9 +45,15 @@ export async function GET(request: NextRequest) {
       metrics,
       history,
     });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("[/api/weather/ml-shadow] GET error:", err);
-    return NextResponse.json({ error: "Failed to fetch shadow monitoring data" }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const errorStack = err instanceof Error ? err.stack : undefined;
+    return NextResponse.json({
+      error: "Failed to fetch shadow monitoring data",
+      details: errorMessage,
+      stack: errorStack,
+    }, { status: 500 });
   }
 }
 
