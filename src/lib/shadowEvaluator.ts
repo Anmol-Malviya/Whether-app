@@ -56,78 +56,184 @@ const DISCLAIMER_NOTICE =
 
 /**
  * Calculates Trapezoidal Area Under the Precision-Recall Curve (PR-AUC).
- * Returns null if positive samples are fewer than 2 or total evaluated < 5.
+ *
+ * Rules:
+ * - Group tied probability scores correctly so all instances with identical score
+ *   are assigned to the positive class together at that threshold.
+ * - Precision-recall points are computed threshold by threshold.
+ * - If positive samples are fewer than 1 (or total items < 1), returns null (insufficient positive samples).
+ * - If positive samples < 2 or total evaluated < 5, returns null (insufficient sample size).
+ * - Curve starts at recall = 0 and precision of first evaluated point (or 1.0).
+ * - Uses trapezoidal integration across monotonic recall steps.
  */
-function calculatePrAuc(items: { prob: number; actualBinary: number }[]): number | null {
-  if (items.length < 5) return null;
+export function calculatePrAuc(items: { prob: number; actualBinary: number }[]): number | null {
+  if (!items || items.length < 5) return null;
   const totalPositives = items.filter((x) => x.actualBinary === 1).length;
   if (totalPositives < 2 || totalPositives === items.length) return null;
 
-  // Sort descending by predicted probability
+  // Group items by distinct probability threshold in descending order to properly handle tied scores
   const sorted = [...items].sort((a, b) => b.prob - a.prob);
+
+  // Collect distinct thresholds
+  const distinctThresholds: number[] = [];
+  for (const item of sorted) {
+    if (distinctThresholds.length === 0 || distinctThresholds[distinctThresholds.length - 1] !== item.prob) {
+      distinctThresholds.push(item.prob);
+    }
+  }
+
+  // Calculate precision and recall points across distinct score thresholds
+  const curvePoints: { recall: number; precision: number }[] = [{ recall: 0, precision: 1.0 }];
 
   let currentTp = 0;
   let currentFp = 0;
-  const curvePoints: { recall: number; precision: number }[] = [{ recall: 0, precision: 1.0 }];
+  let idx = 0;
 
-  for (const item of sorted) {
-    if (item.actualBinary === 1) currentTp++;
-    else currentFp++;
+  for (const thresh of distinctThresholds) {
+    // Process all tied instances at this threshold together
+    while (idx < sorted.length && sorted[idx].prob === thresh) {
+      if (sorted[idx].actualBinary === 1) {
+        currentTp++;
+      } else {
+        currentFp++;
+      }
+      idx++;
+    }
 
     const recall = currentTp / totalPositives;
     const precision = currentTp / (currentTp + currentFp);
     curvePoints.push({ recall, precision });
   }
 
-  // Trapezoidal integration
+  // Trapezoidal integration across recall steps
   let auc = 0;
   for (let i = 1; i < curvePoints.length; i++) {
     const p1 = curvePoints[i - 1];
     const p2 = curvePoints[i];
     const dx = p2.recall - p1.recall;
-    const avgY = (p1.precision + p2.precision) / 2;
-    auc += dx * avgY;
+    if (dx > 0) {
+      const avgY = (p1.precision + p2.precision) / 2;
+      auc += dx * avgY;
+    }
   }
 
   return Math.max(0, Math.min(1, Math.round(auc * 10000) / 10000));
 }
 
+const LEASE_DURATION_MS = 60 * 1000; // 60 seconds lease
+const MAX_EVALUATION_ATTEMPTS = 5;
+
 /**
- * Idempotent, concurrency-safe evaluation workflow using atomic conditional updates:
- * - Selects pending records with targetLeadTimeUtc <= now - 15m.
- * - Transitions state atomically to 'evaluating' to lock against concurrent cron runs.
- * - Fetches recorded outcome from Open-Meteo.
- * - Computes signed error, squared error, absolute error, confusion matrix, and Brier loss.
- * - Transitions state to 'evaluated' or 'incomplete_hourly'/'outcome_missing'.
+ * Idempotent, concurrency-safe evaluation workflow using atomic conditional claims and leases:
+ * - Claims pending records or reclaims records with expired evaluation leases where attempts < MAX_EVALUATION_ATTEMPTS.
+ * - Prevents two workers from evaluating the same record simultaneously via atomic findOneAndUpdate.
+ * - Validates all required prediction values (predictedTemperature, predictedRainProbability, predictedRainClass)
+ *   and never substitutes actual values, 0.0, or false.
+ * - Invalid prediction records are marked as 'failed_prediction' with explicit failureReason.
+ * - Applies a bounded retry policy with evaluationAttempts and visible failure states.
+ * - Uses conditional update ({ _id, evaluationStatus: "evaluating" }) when saving results.
  */
-export async function runShadowEvaluation(): Promise<{ evaluated: number; skipped: number; incomplete: number }> {
+export async function runShadowEvaluation(): Promise<{ evaluated: number; skipped: number; incomplete: number; failed: number }> {
   await connectToDatabase();
 
   const now = new Date();
   // Cutoff: allow 15m accumulation post target hour
   const cutoffTime = new Date(now.getTime() - 15 * 60 * 1000);
 
-  // Claim batch atomically using findOneAndUpdate to prevent race conditions across concurrent requests
   let evaluated = 0;
   let skipped = 0;
   let incomplete = 0;
+  let failed = 0;
 
   const maxBatch = 50;
   for (let i = 0; i < maxBatch; i++) {
+    const claimTime = new Date();
+    const leaseUntil = new Date(claimTime.getTime() + LEASE_DURATION_MS);
+
+    // Atomically claim a pending record OR reclaim an expired-lease record
     const record = await MlEvaluation.findOneAndUpdate(
       {
-        evaluationStatus: "pending",
         targetLeadTimeUtc: { $lte: cutoffTime },
+        $or: [
+          { evaluationStatus: "pending" },
+          {
+            evaluationStatus: "evaluating",
+            evaluationLeaseUntil: { $lte: claimTime },
+            evaluationAttempts: { $lt: MAX_EVALUATION_ATTEMPTS },
+          },
+        ],
       },
       {
-        $set: { evaluationStatus: "evaluating" },
+        $set: {
+          evaluationStatus: "evaluating",
+          evaluationLeaseUntil: leaseUntil,
+        },
+        $inc: { evaluationAttempts: 1 },
       },
       { new: true }
     );
 
-    if (!record) break; // No more pending records ready for evaluation
+    if (!record) break; // No more records ready for evaluation
+
+    // If max attempts reached on this claimed record, mark terminally failed
+    if (record.evaluationAttempts > MAX_EVALUATION_ATTEMPTS) {
+      await MlEvaluation.updateOne(
+        { _id: record._id, evaluationStatus: "evaluating" },
+        {
+          $set: {
+            evaluationStatus: "failed_prediction",
+            failureReason: `Exceeded maximum evaluation attempts (${MAX_EVALUATION_ATTEMPTS})`,
+            evaluationLeaseUntil: null,
+          },
+        }
+      );
+      failed++;
+      continue;
+    }
 
     try {
+      // 1. Strict validation of prediction fields before evaluating metrics
+      // NEVER substitute actual temperature, 0.0 prob, or false rain class.
+      const hasValidTemp =
+        record.predictedTemperature !== null &&
+        record.predictedTemperature !== undefined &&
+        Number.isFinite(record.predictedTemperature);
+
+      const hasValidProb =
+        record.predictedRainProbability !== null &&
+        record.predictedRainProbability !== undefined &&
+        Number.isFinite(record.predictedRainProbability) &&
+        record.predictedRainProbability >= 0 &&
+        record.predictedRainProbability <= 1;
+
+      const hasValidRainClass =
+        record.predictedRainClass !== null &&
+        record.predictedRainClass !== undefined &&
+        typeof record.predictedRainClass === "boolean";
+
+      if (!hasValidTemp || !hasValidProb || !hasValidRainClass) {
+        const reasons: string[] = [];
+        if (!hasValidTemp) reasons.push("Missing or invalid predictedTemperature");
+        if (!hasValidProb) reasons.push("Missing or invalid predictedRainProbability");
+        if (!hasValidRainClass) reasons.push("Missing or invalid predictedRainClass");
+
+        const explicitReason = reasons.join("; ");
+        await MlEvaluation.updateOne(
+          { _id: record._id, evaluationStatus: "evaluating" },
+          {
+            $set: {
+              evaluationStatus: "failed_prediction",
+              failureStatus: "invalid_prediction_values",
+              failureReason: explicitReason,
+              lastEvaluationError: explicitReason,
+              evaluationLeaseUntil: null,
+            },
+          }
+        );
+        failed++;
+        continue;
+      }
+
       const targetIso = record.targetLeadTimeUtc.toISOString();
       const datePart = targetIso.slice(0, 10);
 
@@ -137,17 +243,40 @@ export async function runShadowEvaluation(): Promise<{ evaluated: number; skippe
 
       const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
       if (!res.ok) {
-        // Revert lock to pending for next cycle
-        await MlEvaluation.updateOne({ _id: record._id }, { $set: { evaluationStatus: "pending" } });
-        skipped++;
+        const errorMsg = `Open-Meteo API response status ${res.status}`;
+        const willRetry = record.evaluationAttempts < MAX_EVALUATION_ATTEMPTS;
+        await MlEvaluation.updateOne(
+          { _id: record._id, evaluationStatus: "evaluating" },
+          {
+            $set: {
+              evaluationStatus: willRetry ? "pending" : "failed_prediction",
+              lastEvaluationError: errorMsg,
+              failureReason: willRetry ? undefined : `Fetch failed after ${MAX_EVALUATION_ATTEMPTS} attempts: ${errorMsg}`,
+              evaluationLeaseUntil: null,
+            },
+          }
+        );
+        if (willRetry) skipped++; else failed++;
         continue;
       }
 
       const data = await res.json();
       const hourly = data.hourly;
       if (!hourly || !Array.isArray(hourly.time)) {
-        await MlEvaluation.updateOne({ _id: record._id }, { $set: { evaluationStatus: "pending" } });
-        skipped++;
+        const errorMsg = "Missing or malformed hourly time array in Open-Meteo response";
+        const willRetry = record.evaluationAttempts < MAX_EVALUATION_ATTEMPTS;
+        await MlEvaluation.updateOne(
+          { _id: record._id, evaluationStatus: "evaluating" },
+          {
+            $set: {
+              evaluationStatus: willRetry ? "pending" : "failed_prediction",
+              lastEvaluationError: errorMsg,
+              failureReason: willRetry ? undefined : errorMsg,
+              evaluationLeaseUntil: null,
+            },
+          }
+        );
+        if (willRetry) skipped++; else failed++;
         continue;
       }
 
@@ -155,7 +284,16 @@ export async function runShadowEvaluation(): Promise<{ evaluated: number; skippe
       const matchIdx = hourly.time.findIndex((t: string) => t.startsWith(targetHourPrefix));
 
       if (matchIdx === -1) {
-        await MlEvaluation.updateOne({ _id: record._id }, { $set: { evaluationStatus: "outcome_missing" } });
+        await MlEvaluation.updateOne(
+          { _id: record._id, evaluationStatus: "evaluating" },
+          {
+            $set: {
+              evaluationStatus: "outcome_missing",
+              lastEvaluationError: `No matching hourly slot for prefix ${targetHourPrefix}`,
+              evaluationLeaseUntil: null,
+            },
+          }
+        );
         skipped++;
         continue;
       }
@@ -168,7 +306,16 @@ export async function runShadowEvaluation(): Promise<{ evaluated: number; skippe
         actualTemp === null || actualTemp === undefined || !Number.isFinite(actualTemp) ||
         actualPrecip === null || actualPrecip === undefined || !Number.isFinite(actualPrecip)
       ) {
-        await MlEvaluation.updateOne({ _id: record._id }, { $set: { evaluationStatus: "incomplete_hourly" } });
+        await MlEvaluation.updateOne(
+          { _id: record._id, evaluationStatus: "evaluating" },
+          {
+            $set: {
+              evaluationStatus: "incomplete_hourly",
+              lastEvaluationError: "Hourly temperature or precipitation is missing or non-finite",
+              evaluationLeaseUntil: null,
+            },
+          }
+        );
         incomplete++;
         continue;
       }
@@ -176,9 +323,10 @@ export async function runShadowEvaluation(): Promise<{ evaluated: number; skippe
       const actualRainClass = actualPrecip >= 0.1;
       const actualRainBinary = actualRainClass ? 1 : 0;
 
-      const predTemp = record.predictedTemperature ?? actualTemp;
-      const predProb = record.predictedRainProbability ?? 0.0;
-      const predRainClass = record.predictedRainClass ?? false;
+      // Genuine predictions verified without contamination
+      const predTemp = record.predictedTemperature as number;
+      const predProb = record.predictedRainProbability as number;
+      const predRainClass = record.predictedRainClass as boolean;
 
       const tempError = predTemp - actualTemp;
       const tempAbsError = Math.abs(tempError);
@@ -186,8 +334,9 @@ export async function runShadowEvaluation(): Promise<{ evaluated: number; skippe
       const rainCorrect = predRainClass === actualRainClass;
       const brierLoss = Math.pow(predProb - actualRainBinary, 2);
 
-      await MlEvaluation.updateOne(
-        { _id: record._id },
+      // Conditional update to ensure the record is still owned by this lease
+      const updateResult = await MlEvaluation.updateOne(
+        { _id: record._id, evaluationStatus: "evaluating" },
         {
           $set: {
             actualOutcome: {
@@ -203,19 +352,40 @@ export async function runShadowEvaluation(): Promise<{ evaluated: number; skippe
               outcomeSource: "open-meteo-forecast-hourly (model-derived outcome)",
             },
             evaluationStatus: "evaluated",
+            evaluationLeaseUntil: null,
+            lastEvaluationError: null,
           },
         }
       );
-      evaluated++;
+
+      if (updateResult.modifiedCount > 0) {
+        evaluated++;
+      } else {
+        // Record was modified or reclaimed by another process
+        console.warn(`[shadowEvaluator] Lost lease or ownership for record ${record.evaluationKey}`);
+        skipped++;
+      }
     } catch (err) {
-      console.warn(`[shadowEvaluator] Error processing record ${record.evaluationKey}:`, err);
-      // Revert lock so transient failures can be retried
-      await MlEvaluation.updateOne({ _id: record._id }, { $set: { evaluationStatus: "pending" } });
-      skipped++;
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.warn(`[shadowEvaluator] Error processing record ${record.evaluationKey}:`, errorMsg);
+      const willRetry = record.evaluationAttempts < MAX_EVALUATION_ATTEMPTS;
+
+      await MlEvaluation.updateOne(
+        { _id: record._id, evaluationStatus: "evaluating" },
+        {
+          $set: {
+            evaluationStatus: willRetry ? "pending" : "failed_prediction",
+            lastEvaluationError: errorMsg,
+            failureReason: willRetry ? undefined : `Failed after ${MAX_EVALUATION_ATTEMPTS} attempts: ${errorMsg}`,
+            evaluationLeaseUntil: null,
+          },
+        }
+      );
+      if (willRetry) skipped++; else failed++;
     }
   }
 
-  return { evaluated, skipped, incomplete };
+  return { evaluated, skipped, incomplete, failed };
 }
 
 /**
@@ -277,18 +447,22 @@ export async function getShadowEvaluationMetrics(filterRange?: {
       sumSignedError += r.actualOutcome.temperatureError ?? 0;
       sumBrier += r.actualOutcome.brierLoss ?? 0;
 
-      const pred = r.predictedRainClass ?? false;
-      const actual = r.actualOutcome.actualRainClass;
+      // Classification metrics evaluated strictly from non-null predictedRainClass
+      if (typeof r.predictedRainClass === "boolean") {
+        const pred = r.predictedRainClass;
+        const actual = r.actualOutcome.actualRainClass;
 
-      if (pred && actual) tp++;
-      else if (pred && !actual) fp++;
-      else if (!pred && !actual) tn++;
-      else if (!pred && actual) fn++;
+        if (pred && actual) tp++;
+        else if (pred && !actual) fp++;
+        else if (!pred && !actual) tn++;
+        else if (!pred && actual) fn++;
+      }
 
-      if (r.predictedRainProbability !== null && r.predictedRainProbability !== undefined) {
+      // Raw continuous probability metric (PR-AUC) kept strictly separate from thresholded classification
+      if (r.predictedRainProbability !== null && r.predictedRainProbability !== undefined && Number.isFinite(r.predictedRainProbability)) {
         prItems.push({
           prob: r.predictedRainProbability,
-          actualBinary: actual ? 1 : 0,
+          actualBinary: r.actualOutcome.actualRainClass ? 1 : 0,
         });
       }
     }

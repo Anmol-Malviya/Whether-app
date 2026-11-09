@@ -180,6 +180,7 @@ export async function fetchLiveHourlyObservations(
 /**
  * Safely persists a shadow prediction evaluation record into MongoDB.
  * Implements deterministic duplicate prevention using evaluationKey.
+ * Handles duplicate-key races safely (E11000) and tracks database persistence outcomes.
  */
 async function persistShadowPrediction(recordData: {
   locationId: string;
@@ -197,10 +198,15 @@ async function persistShadowPrediction(recordData: {
   failureStatus?: string;
   failureReason?: string;
   evaluationStatus: "pending" | "failed_prediction";
-}) {
+}): Promise<{ success: boolean; duplicate?: boolean; error?: string }> {
   try {
     await connectToDatabase();
     const evaluationKey = `${recordData.locationId}_obs_only_v1_${recordData.targetLeadTimeUtc.toISOString()}`;
+
+    // Ensure model indexes are initialized (creates unique evaluationKey index & lease indexes)
+    await MlEvaluation.init().catch((initErr) => {
+      console.warn("[mlPrediction] MlEvaluation index initialization warning:", initErr);
+    });
 
     await MlEvaluation.updateOne(
       { evaluationKey },
@@ -208,14 +214,24 @@ async function persistShadowPrediction(recordData: {
         $setOnInsert: {
           evaluationKey,
           ...recordData,
+          evaluationAttempts: 0,
+          evaluationLeaseUntil: null,
           generatedAt: new Date(),
         },
       },
       { upsert: true }
     );
-  } catch (err) {
-    // Non-blocking: database logging errors must not break user-facing aggregation
-    console.warn("[mlPrediction] Failed to persist shadow record to MongoDB:", err instanceof Error ? err.message : err);
+    return { success: true };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isDuplicate = typeof errorMsg === "string" && (errorMsg.includes("E11000") || errorMsg.includes("duplicate key"));
+    if (isDuplicate) {
+      console.info(`[mlPrediction] Safe duplicate-key race handled for key: ${recordData.locationId}_obs_only_v1_${recordData.targetLeadTimeUtc.toISOString()}`);
+      return { success: true, duplicate: true };
+    }
+    // Non-blocking: database logging errors must not break user-facing aggregation, but remain measurable
+    console.warn("[mlPrediction] Failed to persist shadow record to MongoDB:", errorMsg);
+    return { success: false, error: errorMsg };
   }
 }
 
@@ -231,7 +247,7 @@ export async function getMlPrediction(
   const serviceBaseUrl = process.env.ML_SERVICE_URL || DEFAULT_ML_SERVICE_URL;
   const predictEndpoint = `${serviceBaseUrl.replace(/\/$/, "")}/predict`;
 
-  const { observations, stale, reason } = await fetchLiveHourlyObservations(lat, lon);
+  const { observations, stale } = await fetchLiveHourlyObservations(lat, lon);
 
   if (observations.length !== 3) {
     const status = stale ? "stale_inputs" : "unavailable";

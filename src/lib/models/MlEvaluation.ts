@@ -18,6 +18,9 @@ export interface IMlEvaluationRecord extends Document {
   failureStatus?: string; // "available" | "unavailable" | "stale_inputs"
   failureReason?: string;
   evaluationStatus: "pending" | "evaluating" | "evaluated" | "outcome_missing" | "incomplete_hourly" | "failed_prediction";
+  evaluationLeaseUntil?: Date | null;
+  evaluationAttempts: number;
+  lastEvaluationError?: string | null;
   actualOutcome?: {
     verifiedAtUtc: Date;
     actualTemperature: number;
@@ -56,6 +59,9 @@ const MlEvaluationSchema = new Schema<IMlEvaluationRecord>(
       default: "pending",
       index: true,
     },
+    evaluationLeaseUntil: { type: Date, default: null, index: true },
+    evaluationAttempts: { type: Number, default: 0 },
+    lastEvaluationError: { type: String, default: null },
     actualOutcome: {
       verifiedAtUtc: { type: Date },
       actualTemperature: { type: Number },
@@ -72,9 +78,10 @@ const MlEvaluationSchema = new Schema<IMlEvaluationRecord>(
   { collection: "ml_evaluations", timestamps: true }
 );
 
-// Compound indexes for fast, bounded time-range queries
+// Compound indexes for fast, bounded time-range queries and lease recovery
 MlEvaluationSchema.index({ targetLeadTimeUtc: -1, evaluationStatus: 1 });
 MlEvaluationSchema.index({ locationId: 1, targetLeadTimeUtc: -1 });
+MlEvaluationSchema.index({ evaluationStatus: 1, evaluationLeaseUntil: 1, targetLeadTimeUtc: 1 });
 
 export const MlEvaluation: Model<IMlEvaluationRecord> =
   models.MlEvaluation || model<IMlEvaluationRecord>("MlEvaluation", MlEvaluationSchema);
