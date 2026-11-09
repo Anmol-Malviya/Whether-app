@@ -170,7 +170,15 @@ export default function HomePage() {
         }}
       />
 
-      <main style={{ width: "100%", maxWidth: 440, padding: "0 16px 110px", boxSizing: "border-box" }}>
+      <main
+        style={{
+          width: "100%",
+          maxWidth: activeTab === "shadow" ? 1440 : 440,
+          padding: activeTab === "shadow" ? "0 24px 140px" : "0 16px 110px",
+          boxSizing: "border-box",
+          transition: "max-width 0.2s ease",
+        }}
+      >
         {activeTab === "dashboard" && (
           <div className="fade-up">
             <WeatherHero
@@ -191,7 +199,7 @@ export default function HomePage() {
         )}
 
         {activeTab === "shadow" && (
-          <div className="fade-up" style={{ maxWidth: 800, margin: "0 auto" }}>
+          <div className="fade-up w-full">
             <ShadowMonitoringDashboard />
           </div>
         )}
@@ -209,8 +217,8 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* ── Floating Blue Camera Button (above bottom nav on bottom-right) ── */}
-      {!showCamera && (
+      {/* ── Floating Blue Camera Button (Hidden on ML Shadow tab to prevent overlap with monitoring metrics) ── */}
+      {!showCamera && activeTab !== "shadow" && (
         <div
           style={{
             position: "fixed",

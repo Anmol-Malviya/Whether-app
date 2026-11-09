@@ -38,31 +38,34 @@ export default function Navbar({
 
   return (
     <>
-      {/* ── Top Header Bar (Full width white bar with centered container) ── */}
-      <div style={{ width: "100%", background: "#FFFFFF", borderBottom: "1px solid #EEF3FA" }}>
+      {/* ── Top Header Bar ── */}
+      <div style={{ width: "100%", background: "#FFFFFF", borderBottom: "1px solid #E5E7EB", position: "sticky", top: 0, zIndex: 90 }}>
         <header
           style={{
-            maxWidth: 440,
+            maxWidth: activeTab === "shadow" ? 1440 : 440,
             margin: "0 auto",
-            padding: "14px 16px 10px",
+            padding: "10px 24px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            transition: "max-width 0.2s ease",
           }}
         >
-        {/* Brand */}
+        {/* Brand & Optional Breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Sun icon */}
           <div
             style={{
-              width: 28,
-              height: 28,
+              width: 26,
+              height: 26,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              cursor: "pointer",
             }}
+            onClick={() => onTabChange("dashboard")}
           >
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
               <circle cx="16" cy="16" r="7.5" fill="#FBBF24" />
               {/* Sun rays */}
               <line x1="16" y1="2" x2="16" y2="5" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" />
@@ -76,14 +79,76 @@ export default function Navbar({
             </svg>
           </div>
 
-          <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: "-0.5px" }}>
-            <span style={{ color: "#101828" }}>Weather</span>
-            <span style={{ color: "#2165F5" }}>Pulse</span>
+          <div
+            style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.4px", cursor: "pointer", display: "flex", alignItems: "center" }}
+            onClick={() => onTabChange("dashboard")}
+          >
+            <span style={{ color: "#111827" }}>Weather</span>
+            <span style={{ color: "#2563EB" }}>Pulse</span>
           </div>
+
+          {activeTab === "shadow" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 2 }}>
+              <span style={{ color: "#D1D5DB", fontSize: 14 }}>/</span>
+              <span style={{ color: "#64748B", fontSize: 13, fontWeight: 500 }}>ML Monitoring</span>
+            </div>
+          )}
         </div>
 
-        {/* Right actions: Bell + Profile */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        {/* Right actions: Location Selector, Bell, Profile */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Header Location Selector for ML Monitoring view on desktop */}
+          {activeTab === "shadow" && onSelectLocation && onUseCurrentLocation && (
+            <div className="hidden sm:block" style={{ minWidth: 200 }}>
+              <LocationSelector
+                currentLocationName={locationName}
+                onSelectLocation={onSelectLocation}
+                onUseCurrentLocation={onUseCurrentLocation}
+                isLocating={isLocating}
+                customTrigger={(open) => (
+                  <button
+                    onClick={open}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "#F8FAFC",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: 8,
+                      padding: "5px 10px",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      color: "#111827",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        background: "#2563EB",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="#FFFFFF">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                      </svg>
+                    </div>
+                    <span style={{ maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 500 }}>
+                      {locationName}
+                    </span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                )}
+              />
+            </div>
+          )}
+
           {/* Notification bell with red dot */}
           <button
             style={{
@@ -91,15 +156,15 @@ export default function Navbar({
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              padding: 4,
+              padding: 6,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#344054",
+              color: "#64748B",
             }}
             aria-label="Notifications"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
@@ -107,11 +172,11 @@ export default function Navbar({
             <span
               style={{
                 position: "absolute",
-                top: 4,
-                right: 5,
-                width: 7,
-                height: 7,
-                background: "#EF4444",
+                top: 5,
+                right: 6,
+                width: 6,
+                height: 6,
+                background: "#DC2626",
                 borderRadius: "50%",
                 border: "1.5px solid #FFFFFF",
               }}
@@ -121,18 +186,19 @@ export default function Navbar({
           {/* User profile avatar */}
           <div
             style={{
-              width: 34,
-              height: 34,
+              width: 30,
+              height: 30,
               borderRadius: "50%",
-              background: "#E0EAFF",
+              background: "#EEF2FF",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#3538CD",
+              color: "#2563EB",
               cursor: "pointer",
+              border: "1px solid #E0E7FF",
             }}
           >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path fillRule="evenodd" d="M12 2a5 5 0 100 10 5 5 0 000-10zm-7 18a7 7 0 0114 0H5z" clipRule="evenodd" />
             </svg>
           </div>
@@ -140,7 +206,8 @@ export default function Navbar({
       </header>
       </div>
 
-      {/* ── Location Selector Bar matching screenshot ── */}
+      {/* ── Mobile/Default Location Selector Bar (Hidden completely on Shadow Monitoring tab to avoid duplicate location bars) ── */}
+      {activeTab !== "shadow" && (
       <div
         style={{
           width: "100%",
@@ -258,6 +325,7 @@ export default function Navbar({
           </button>
         )}
       </div>
+      )}
 
       {/* ── Fixed Bottom Navigation Bar matching screenshot ── */}
       <nav
@@ -346,6 +414,11 @@ export default function Navbar({
                       <rect x="3" y="3" width="18" height="18" rx="3" ry="3" />
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  )}
+                  {tab.id === "shadow" && (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                     </svg>
                   )}
                   {tab.id === "triage" && (

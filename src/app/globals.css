@@ -200,7 +200,7 @@ body {
   }
 
   /* Ensure tappable targets are at least 44px */
-  button, [role="button"] {
+  button:not(.btn-compact), [role="button"]:not(.btn-compact) {
     min-height: 36px;
   }
 
