@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import LocationSelector, { LocationOption } from "./LocationSelector";
 
 type Tab = "dashboard" | "sources" | "shadow" | "moments" | "triage";
@@ -32,10 +31,6 @@ export default function Navbar({
   onUseCurrentLocation,
   isLocating,
 }: NavbarProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
   // Format coordinates string for location bar
   const latStr = coords?.lat !== undefined ? coords.lat.toFixed(2) : "22.76";
   const lonStr = coords?.lon !== undefined ? coords.lon.toFixed(2) : "75.89";

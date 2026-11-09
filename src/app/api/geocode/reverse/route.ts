@@ -71,8 +71,9 @@ export async function GET(request: NextRequest) {
         lon,
       },
     });
-  } catch (err: any) {
-    console.error("[/api/geocode/reverse] Error:", err?.message || err);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[/api/geocode/reverse] Error:", errorMsg);
     // Fallback gracefully
     return NextResponse.json({
       success: false,

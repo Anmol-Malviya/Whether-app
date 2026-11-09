@@ -1,6 +1,6 @@
 import { MlPredictionPayload } from "@/lib/types/weather";
 import { connectToDatabase } from "@/lib/db";
-import { MlEvaluation } from "@/lib/models/MlEvaluation";
+import { MlEvaluation, ensureMlEvaluationIndexes } from "@/lib/models/MlEvaluation";
 
 export interface HourlyObservationInput {
   timestamp_utc: string;
@@ -16,6 +16,7 @@ export interface HourlyObservationInput {
 
 const DEFAULT_ML_SERVICE_URL = "http://127.0.0.1:8000";
 const REQUEST_TIMEOUT_MS = 3000;
+const DB_WRITE_TIMEOUT_MS = 2500;
 const MAX_STALENESS_HOURS = 2.5;
 const RAIN_THRESHOLD = 0.7425;
 const DISCLAIMER_TEXT =
@@ -178,11 +179,13 @@ export async function fetchLiveHourlyObservations(
 }
 
 /**
- * Safely persists a shadow prediction evaluation record into MongoDB.
+ * Safely persists a shadow prediction evaluation record into MongoDB with timeout protection.
  * Implements deterministic duplicate prevention using evaluationKey.
  * Handles duplicate-key races safely (E11000) and tracks database persistence outcomes.
+ * Awaits writes within a controlled DB_WRITE_TIMEOUT_MS timeout so writes are never unhandled promises,
+ * while preventing database hangs from blocking user weather aggregation.
  */
-async function persistShadowPrediction(recordData: {
+export async function persistShadowPrediction(recordData: {
   locationId: string;
   lat: number;
   lon: number;
@@ -199,39 +202,66 @@ async function persistShadowPrediction(recordData: {
   failureReason?: string;
   evaluationStatus: "pending" | "failed_prediction";
 }): Promise<{ success: boolean; duplicate?: boolean; error?: string }> {
-  try {
-    await connectToDatabase();
-    const evaluationKey = `${recordData.locationId}_obs_only_v1_${recordData.targetLeadTimeUtc.toISOString()}`;
+  const evaluationKey = `${recordData.locationId}_obs_only_v1_${recordData.targetLeadTimeUtc.toISOString()}`;
 
-    // Ensure model indexes are initialized (creates unique evaluationKey index & lease indexes)
-    await MlEvaluation.init().catch((initErr) => {
-      console.warn("[mlPrediction] MlEvaluation index initialization warning:", initErr);
-    });
+  const writeOperation = async (): Promise<{ success: boolean; duplicate?: boolean; error?: string }> => {
+    try {
+      await connectToDatabase();
+      // Safe, single-flight index initialization
+      await ensureMlEvaluationIndexes();
 
-    await MlEvaluation.updateOne(
-      { evaluationKey },
-      {
-        $setOnInsert: {
-          evaluationKey,
-          ...recordData,
-          evaluationAttempts: 0,
-          evaluationLeaseUntil: null,
-          generatedAt: new Date(),
+      const result = await MlEvaluation.updateOne(
+        { evaluationKey },
+        {
+          $setOnInsert: {
+            evaluationKey,
+            ...recordData,
+            evaluationAttempts: 0,
+            evaluationLeaseUntil: null,
+            generatedAt: new Date(),
+          },
         },
-      },
-      { upsert: true }
-    );
-    return { success: true };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isDuplicate = typeof errorMsg === "string" && (errorMsg.includes("E11000") || errorMsg.includes("duplicate key"));
-    if (isDuplicate) {
-      console.info(`[mlPrediction] Safe duplicate-key race handled for key: ${recordData.locationId}_obs_only_v1_${recordData.targetLeadTimeUtc.toISOString()}`);
-      return { success: true, duplicate: true };
+        { upsert: true }
+      );
+
+      const isUpserted = Boolean(result.upsertedCount && result.upsertedCount > 0);
+      if (isUpserted) {
+        console.info(`[mlPrediction] Successfully persisted shadow record: ${evaluationKey}`);
+        return { success: true, duplicate: false };
+      } else {
+        console.info(`[mlPrediction] Shadow record already exists (deterministic idempotency): ${evaluationKey}`);
+        return { success: true, duplicate: true };
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      const isDuplicate =
+        typeof errorMsg === "string" &&
+        (errorMsg.includes("E11000") || errorMsg.includes("duplicate key"));
+
+      if (isDuplicate) {
+        console.info(`[mlPrediction] Safe duplicate-key race handled for key: ${evaluationKey}`);
+        return { success: true, duplicate: true };
+      }
+      console.warn(`[mlPrediction] Failed to persist shadow record (${evaluationKey}):`, errorMsg);
+      return { success: false, error: errorMsg };
     }
-    // Non-blocking: database logging errors must not break user-facing aggregation, but remain measurable
-    console.warn("[mlPrediction] Failed to persist shadow record to MongoDB:", errorMsg);
-    return { success: false, error: errorMsg };
+  };
+
+  // Enforce bounded database write timeout
+  let timer: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<{ success: boolean; duplicate?: boolean; error?: string }>((resolve) => {
+    timer = setTimeout(() => {
+      const timeoutMsg = `Database write timed out after ${DB_WRITE_TIMEOUT_MS}ms`;
+      console.warn(`[mlPrediction] Persistence timeout for key ${evaluationKey}: ${timeoutMsg}`);
+      resolve({ success: false, error: timeoutMsg });
+    }, DB_WRITE_TIMEOUT_MS);
+  });
+
+  try {
+    const outcome = await Promise.race([writeOperation(), timeoutPromise]);
+    return outcome;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -307,8 +337,8 @@ export async function getMlPrediction(
         const rainClass = data.rain_classification;
         const rainThresh = data.selected_rain_threshold ?? RAIN_THRESHOLD;
 
-        // Persist shadow record to MongoDB asynchronously
-        persistShadowPrediction({
+        // Await database write within controlled timeout (never leave unhandled floating promise)
+        const persistResult = await persistShadowPrediction({
           locationId,
           lat,
           lon,
@@ -328,6 +358,12 @@ export async function getMlPrediction(
           evaluationStatus: "pending",
         });
 
+        const persistenceStatus = persistResult.success
+          ? persistResult.duplicate
+            ? "duplicate"
+            : "persisted"
+          : "failed";
+
         return {
           status: "available",
           targetLeadTimeUtc: data.target_lead_time_utc,
@@ -335,6 +371,7 @@ export async function getMlPrediction(
           rainProbability: rainProb,
           rainPredicted: rainClass,
           rainThreshold: rainThresh,
+          persistenceStatus,
           modelMetadata: {
             temperatureModelType: data.model_version?.temperature_model_type,
             rainModelType: data.model_version?.rain_model_type,
@@ -364,8 +401,8 @@ export async function getMlPrediction(
     }
   }
 
-  // Record failure state in shadow log
-  persistShadowPrediction({
+  // Record failure state in shadow log within controlled timeout
+  const failPersistResult = await persistShadowPrediction({
     locationId,
     lat,
     lon,
@@ -390,6 +427,7 @@ export async function getMlPrediction(
     rainProbability: null,
     rainPredicted: null,
     rainThreshold: RAIN_THRESHOLD,
+    persistenceStatus: failPersistResult.success ? "persisted" : "failed",
     modelMetadata: null,
     generatedAt,
     disclaimer: DISCLAIMER_TEXT,

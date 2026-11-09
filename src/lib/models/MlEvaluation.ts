@@ -85,3 +85,22 @@ MlEvaluationSchema.index({ evaluationStatus: 1, evaluationLeaseUntil: 1, targetL
 
 export const MlEvaluation: Model<IMlEvaluationRecord> =
   models.MlEvaluation || model<IMlEvaluationRecord>("MlEvaluation", MlEvaluationSchema);
+
+let indexesInitialized = false;
+
+/**
+ * Safely ensures production indexes on MlEvaluation are verified and created.
+ * Uses a single-flight cache to prevent redundant index builds per Node process.
+ * Never drops or rebuilds existing production collections or indexes.
+ */
+export async function ensureMlEvaluationIndexes(): Promise<void> {
+  if (indexesInitialized) return;
+  try {
+    await MlEvaluation.createIndexes();
+    indexesInitialized = true;
+    console.info("[MlEvaluation] Production indexes verified successfully.");
+  } catch (err) {
+    console.warn("[MlEvaluation] Index synchronization check encountered an issue:", err);
+  }
+}
+

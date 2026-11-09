@@ -1,5 +1,5 @@
 import { connectToDatabase } from "@/lib/db";
-import { MlEvaluation } from "@/lib/models/MlEvaluation";
+import { MlEvaluation, ensureMlEvaluationIndexes } from "@/lib/models/MlEvaluation";
 
 export interface ShadowEvaluationMetrics {
   timeRange: {
@@ -135,6 +135,7 @@ const MAX_EVALUATION_ATTEMPTS = 5;
  */
 export async function runShadowEvaluation(): Promise<{ evaluated: number; skipped: number; incomplete: number; failed: number }> {
   await connectToDatabase();
+  await ensureMlEvaluationIndexes();
 
   const now = new Date();
   // Cutoff: allow 15m accumulation post target hour

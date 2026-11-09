@@ -59,9 +59,10 @@ export interface MlPredictionPayload {
   status: "available" | "unavailable" | "stale_inputs";
   targetLeadTimeUtc: string | null;
   predictedTemperature: number | null; // in Celsius
-  rainProbability: number | null;      // raw model occurrence score [0.0 - 1.0]
+  rainProbability: number | null;      // raw uncalibrated model occurrence score [0.0 - 1.0]
   rainPredicted: boolean | null;       // evaluated against validation threshold
   rainThreshold: number;               // selected validation threshold (0.7425)
+  persistenceStatus?: "persisted" | "duplicate" | "failed" | "skipped";
   modelMetadata: {
     temperatureModelType?: string;
     rainModelType?: string;

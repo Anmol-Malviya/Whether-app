@@ -33,18 +33,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Map DB documents into RawMomentReport format
-    const rawMoments: RawMomentReport[] = momentsDoc.map((m: any) => ({
-      id: m._id.toString(),
-      userName: m.userName,
-      caption: m.caption,
-      imageUrl: m.imageUrl,
-      approximateLocation: m.approximateLocation,
-      coordinates: m.coordinates || { lat: 22.7196, lon: 75.8577 },
-      incidentType: m.incidentType,
-      createdAt: m.createdAt,
-      expiresAt: m.expiresAt,
-      analysisResult: m.analysisResult,
-      verificationStatus: m.verificationStatus,
+    const rawMoments: RawMomentReport[] = momentsDoc.map((m: Record<string, unknown>) => ({
+      id: String(m._id),
+      userName: String(m.userName ?? ""),
+      caption: String(m.caption ?? ""),
+      imageUrl: String(m.imageUrl ?? ""),
+      approximateLocation: String(m.approximateLocation ?? ""),
+      coordinates: (m.coordinates as { lat: number; lon: number }) || { lat: 22.7196, lon: 75.8577 },
+      incidentType: m.incidentType as RawMomentReport["incidentType"],
+      createdAt: new Date(m.createdAt as string | number | Date),
+      expiresAt: new Date(m.expiresAt as string | number | Date),
+      analysisResult: m.analysisResult as RawMomentReport["analysisResult"],
+      verificationStatus: m.verificationStatus as RawMomentReport["verificationStatus"],
     }));
 
     // Perform clustering, deduplication, and confidence scoring

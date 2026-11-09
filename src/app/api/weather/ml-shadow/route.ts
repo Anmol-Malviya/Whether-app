@@ -165,6 +165,17 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const { searchParams } = request.nextUrl;
+
+    // Explicitly reject any query-string authentication attempts
+    if (searchParams.has("secret") || searchParams.has("cron_secret") || searchParams.has("token") || searchParams.has("key")) {
+      console.warn("[/api/weather/ml-shadow] POST rejected: Query-string secret parameters are strictly prohibited");
+      return NextResponse.json(
+        { error: "Unauthorized: Query-string authentication is not allowed. Use Authorization Bearer header." },
+        { status: 401 }
+      );
+    }
+
     const cronSecret = process.env.CRON_SECRET;
 
     // 1. Return 503 when CRON_SECRET is absent
