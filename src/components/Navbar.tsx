@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import LocationSelector, { LocationOption } from "./LocationSelector";
 
-type Tab = "dashboard" | "sources" | "moments" | "triage";
+type Tab = "dashboard" | "sources" | "shadow" | "moments" | "triage";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
   { id: "sources", label: "Sources" },
+  { id: "shadow", label: "ML Shadow" },
   { id: "moments", label: "Moments" },
   { id: "triage", label: "Incident Desk" },
 ];

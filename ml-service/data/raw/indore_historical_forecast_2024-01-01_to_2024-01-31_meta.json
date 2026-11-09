@@ -1,0 +1,69 @@
+{
+  "dataset_type": "historical_forecasts_raw",
+  "data_source": "Open-Meteo Historical Forecast API",
+  "data_provenance": "Archived Numerical Weather Prediction (NWP) model outputs (ECMWF IFS, GFS, Seamless)",
+  "retrieval_timestamp_utc": "2026-11-09T14:14:00.370795+00:00",
+  "location": {
+    "id": "indore",
+    "name": "Indore",
+    "region": "Madhya Pradesh",
+    "country": "India",
+    "target_lat": 22.7196,
+    "target_lon": 75.8577,
+    "returned_lat": 22.741652,
+    "returned_lon": 75.858475,
+    "elevation": 551.0,
+    "local_timezone": "Asia/Kolkata"
+  },
+  "query_range": {
+    "start_date": "2024-01-01",
+    "end_date": "2024-01-31"
+  },
+  "models_queried": [
+    "best_match",
+    "ecmwf_ifs",
+    "gfs_seamless"
+  ],
+  "variables_queried": [
+    "temperature_2m",
+    "relative_humidity_2m",
+    "dew_point_2m",
+    "precipitation",
+    "wind_speed_10m",
+    "wind_direction_10m",
+    "surface_pressure",
+    "cloud_cover"
+  ],
+  "hourly_units": {
+    "time": "iso8601",
+    "temperature_2m_best_match": "\u00b0C",
+    "relative_humidity_2m_best_match": "%",
+    "dew_point_2m_best_match": "\u00b0C",
+    "precipitation_best_match": "mm",
+    "wind_speed_10m_best_match": "km/h",
+    "wind_direction_10m_best_match": "\u00b0",
+    "surface_pressure_best_match": "hPa",
+    "cloud_cover_best_match": "%",
+    "temperature_2m_ecmwf_ifs": "\u00b0C",
+    "relative_humidity_2m_ecmwf_ifs": "%",
+    "dew_point_2m_ecmwf_ifs": "\u00b0C",
+    "precipitation_ecmwf_ifs": "mm",
+    "wind_speed_10m_ecmwf_ifs": "km/h",
+    "wind_direction_10m_ecmwf_ifs": "\u00b0",
+    "surface_pressure_ecmwf_ifs": "hPa",
+    "cloud_cover_ecmwf_ifs": "%",
+    "temperature_2m_gfs_seamless": "\u00b0C",
+    "relative_humidity_2m_gfs_seamless": "%",
+    "dew_point_2m_gfs_seamless": "\u00b0C",
+    "precipitation_gfs_seamless": "mm",
+    "wind_speed_10m_gfs_seamless": "km/h",
+    "wind_direction_10m_gfs_seamless": "\u00b0",
+    "surface_pressure_gfs_seamless": "hPa",
+    "cloud_cover_gfs_seamless": "%"
+  },
+  "record_count": 2232,
+  "output_files": {
+    "raw_json": "C:\\Users\\anmol\\Downloads\\weather-major\\ml-service\\data\\raw\\indore_historical_forecast_2024-01-01_to_2024-01-31.json",
+    "raw_csv": "C:\\Users\\anmol\\Downloads\\weather-major\\ml-service\\data\\raw\\indore_historical_forecast_2024-01-01_to_2024-01-31.csv"
+  }
+}

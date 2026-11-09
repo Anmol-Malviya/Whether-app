@@ -33,9 +33,24 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  // TODO: Verify session/auth token here when auth is added
-  // For now, allow deletion for demo purposes
-  const userId = request.headers.get("x-user-id") ?? "guest_user";
+
+  // Real, verified server-side authentication check:
+  // Client-supplied headers like 'x-user-id' or 'x-user-role' cannot be trusted as identity or privilege proof.
+  // We check for a cryptographically verified internal authorization token or Bearer secret (e.g. CRON_SECRET or ADMIN_API_KEY)
+  const authHeader = request.headers.get("authorization");
+  const adminSecret = process.env.ADMIN_API_KEY || process.env.CRON_SECRET;
+  const isVerifiedAdmin = Boolean(adminSecret && authHeader === `Bearer ${adminSecret}`);
+
+  // When no verified admin secret matches, and full user session/JWT authentication is not yet integrated,
+  // untrusted requests must be rejected to prevent unauthorized deletion.
+  if (!isVerifiedAdmin) {
+    return Response.json(
+      {
+        error: "Unauthorized: Secure server-side authentication is required to delete moments.",
+      },
+      { status: 401 }
+    );
+  }
 
   try {
     await connectToDatabase();
@@ -43,12 +58,6 @@ export async function DELETE(
 
     if (!moment) {
       return Response.json({ error: "Moment not found" }, { status: 404 });
-    }
-
-    // FR-033: Only owner can delete (admin bypass via header for demo)
-    const isAdmin = request.headers.get("x-user-role") === "admin";
-    if (moment.userId !== userId && !isAdmin) {
-      return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (moment.imageUrl) {

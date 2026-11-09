@@ -1,0 +1,101 @@
+{
+  "report_title": "WeatherPulse Phase 3.2 Seasonal and Multi-Year Dataset Coverage Report",
+  "generated_at_utc": "2026-11-09T14:30:00Z",
+  "location": {
+    "name": "Indore",
+    "region": "Madhya Pradesh",
+    "country": "India",
+    "latitude": 22.7196,
+    "longitude": 75.8577,
+    "elevation_m": 553.0,
+    "timezone": "Asia/Kolkata"
+  },
+  "temporal_coverage": {
+    "start_utc": "2021-01-01 00:00:00+00:00",
+    "end_utc": "2024-12-31 23:00:00+00:00",
+    "total_hours": 35064,
+    "total_days": 1461,
+    "years_covered": [2021, 2022, 2023, 2024]
+  },
+  "observations_summary": {
+    "total_records": 35064,
+    "duplicates_count": 0,
+    "missing_values_count": 0,
+    "yearly_breakdown": {
+      "2021": {"hours": 8760, "missing": 0},
+      "2022": {"hours": 8760, "missing": 0},
+      "2023": {"hours": 8760, "missing": 0},
+      "2024": {"hours": 8784, "missing": 0, "leap_year": true}
+    }
+  },
+  "seasonal_analysis": {
+    "summer_mar_may": {
+      "hours": 8832,
+      "max_temperature_c": 45.0,
+      "avg_temperature_c": 29.4,
+      "min_temperature_c": 11.8,
+      "total_rainfall_mm": 65.4
+    },
+    "southwest_monsoon_jun_sep": {
+      "hours": 11712,
+      "rain_hours_ge_0_1mm": 4873,
+      "rain_hours_pct": 41.61,
+      "total_rainfall_mm": 4171.8,
+      "pct_of_total_annual_rainfall": 89.82,
+      "max_hourly_rain_mm": 27.6,
+      "avg_temperature_c": 26.1
+    },
+    "post_monsoon_oct_nov": {
+      "hours": 5856,
+      "total_rainfall_mm": 178.5,
+      "avg_temperature_c": 23.8
+    },
+    "winter_dec_feb": {
+      "hours": 8664,
+      "min_temperature_c": 6.5,
+      "avg_temperature_c": 19.2,
+      "total_rainfall_mm": 228.7
+    }
+  },
+  "precipitation_distribution": {
+    "total_hours": 35064,
+    "zero_rain_hours_lt_0_1mm": 29569,
+    "zero_rain_pct": 84.33,
+    "measurable_rain_hours_ge_0_1mm": 5495,
+    "measurable_rain_pct": 15.67,
+    "significant_rain_hours_ge_1_0mm": 1203,
+    "significant_rain_pct": 3.43,
+    "heavy_rain_hours_ge_5_0mm": 158,
+    "heavy_rain_pct": 0.45,
+    "violent_rain_hours_ge_15_0mm": 17,
+    "max_hourly_rain_mm": 27.6,
+    "cumulative_4year_rain_mm": 4644.4
+  },
+  "forecast_archive_availability": {
+    "total_forecast_records": 103248,
+    "models_queried": ["best_match", "ecmwf_ifs", "gfs_seamless"],
+    "breakdown_by_year_and_model": {
+      "2021": {"best_match": 8760, "ecmwf_ifs": 8760, "gfs_seamless": 6816, "gfs_note": "GFS seamless archive begins March 23, 2021 in Open-Meteo"},
+      "2022": {"best_match": 8760, "ecmwf_ifs": 8760, "gfs_seamless": 8760},
+      "2023": {"best_match": 8760, "ecmwf_ifs": 8760, "gfs_seamless": 8760},
+      "2024": {"best_match": 8784, "ecmwf_ifs": 8784, "gfs_seamless": 8784}
+    },
+    "initialization_timestamp_status": "UNKNOWN_FROM_OPEN_METEO_API",
+    "lead_time_status": "NOMINAL_UNKNOWN_CYCLE",
+    "retrieval_timestamp_note": "Historical retrieval timestamps denote API query execution time, not original forecast publication or run issuance timestamps.",
+    "operational_availability_reconstruction": "Operational NWP run availability at decision time t cannot be reconstructed from this historical archive.",
+    "recommended_operational_latency_buffer_hours": 2.0
+  },
+  "training_dataset_summary": {
+    "total_samples": 35061,
+    "features_count": 56,
+    "targets_count": 3,
+    "targets": [
+      "target_obs_temperature_2m_lead1h",
+      "target_obs_rain_occurrence_lead1h",
+      "target_obs_precipitation_lead1h"
+    ],
+    "leakage_audit_status": "PASSED_STRICT"
+  }
+}
+

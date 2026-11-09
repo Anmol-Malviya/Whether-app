@@ -1,0 +1,387 @@
+{
+  "pipeline_version": "2.1.0",
+  "generated_at_utc": "2026-11-09T15:03:12.442350+00:00",
+  "location": {
+    "name": "Indore",
+    "region": "Madhya Pradesh",
+    "country": "India",
+    "latitude": 22.7196,
+    "longitude": 75.8577,
+    "timezone": "Asia/Kolkata"
+  },
+  "observations_summary": {
+    "total_records": 35064,
+    "duplicates_removed": 744,
+    "start_time_utc": "2021-01-01T00:00:00+00:00",
+    "end_time_utc": "2024-12-31T23:00:00+00:00",
+    "missing_summary": {
+      "temperature_2m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "relative_humidity_2m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "dew_point_2m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "precipitation": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "wind_speed_10m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "wind_direction_10m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "surface_pressure": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "cloud_cover": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      }
+    },
+    "range_validation": {
+      "temperature_2m": {
+        "min_found": 6.5,
+        "max_found": 45.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          -20.0,
+          60.0
+        ]
+      },
+      "relative_humidity_2m": {
+        "min_found": 6.0,
+        "max_found": 100.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          100.0
+        ]
+      },
+      "dew_point_2m": {
+        "min_found": -6.1,
+        "max_found": 25.7,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          -30.0,
+          45.0
+        ]
+      },
+      "precipitation": {
+        "min_found": 0.0,
+        "max_found": 27.6,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          300.0
+        ]
+      },
+      "wind_speed_10m": {
+        "min_found": 0.0,
+        "max_found": 40.2,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          150.0
+        ]
+      },
+      "wind_direction_10m": {
+        "min_found": 1.0,
+        "max_found": 360.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          360.0
+        ]
+      },
+      "surface_pressure": {
+        "min_found": 933.4,
+        "max_found": 960.3,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          800.0,
+          1100.0
+        ]
+      },
+      "cloud_cover": {
+        "min_found": 0.0,
+        "max_found": 100.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          100.0
+        ]
+      }
+    },
+    "source_partition_audit": {
+      "annual_files_loaded": [
+        "indore_historical_obs_2021.csv",
+        "indore_historical_obs_2022.csv",
+        "indore_historical_obs_2023.csv",
+        "indore_historical_obs_2024.csv"
+      ],
+      "pilot_files_found": [
+        "indore_historical_obs_2024-01-01_to_2024-01-31.csv"
+      ],
+      "annual_records_loaded": 35064,
+      "pilot_records_loaded": 744,
+      "annual_internal_duplicates_count": 0,
+      "pilot_internal_duplicates_count": 0,
+      "superseded_pilot_records_count": 744,
+      "total_source_duplicates_count": 744,
+      "precedence_rule": "Annual full-year partition takes strict precedence over partial/pilot partition"
+    }
+  },
+  "forecasts_summary": {
+    "total_records": 103248,
+    "duplicates_removed": 2232,
+    "models_present": [
+      "best_match",
+      "ecmwf_ifs",
+      "gfs_seamless"
+    ],
+    "start_time_utc": "2021-01-01T00:00:00+00:00",
+    "end_time_utc": "2024-12-31T23:00:00+00:00",
+    "missing_summary": {
+      "temperature_2m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "relative_humidity_2m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "dew_point_2m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "precipitation": {
+        "missing_count": 346,
+        "missing_pct": 0.34
+      },
+      "wind_speed_10m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "wind_direction_10m": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "surface_pressure": {
+        "missing_count": 0,
+        "missing_pct": 0.0
+      },
+      "cloud_cover": {
+        "missing_count": 1,
+        "missing_pct": 0.0
+      }
+    },
+    "range_validation": {
+      "temperature_2m": {
+        "min_found": 6.5,
+        "max_found": 45.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          -20.0,
+          60.0
+        ]
+      },
+      "relative_humidity_2m": {
+        "min_found": 5.0,
+        "max_found": 100.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          100.0
+        ]
+      },
+      "dew_point_2m": {
+        "min_found": -10.3,
+        "max_found": 25.7,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          -30.0,
+          45.0
+        ]
+      },
+      "precipitation": {
+        "min_found": 0.0,
+        "max_found": 44.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          300.0
+        ]
+      },
+      "wind_speed_10m": {
+        "min_found": 0.0,
+        "max_found": 52.7,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          150.0
+        ]
+      },
+      "wind_direction_10m": {
+        "min_found": 1.0,
+        "max_found": 360.0,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          0.0,
+          360.0
+        ]
+      },
+      "surface_pressure": {
+        "min_found": 932.5,
+        "max_found": 960.3,
+        "out_of_bounds_count": 0,
+        "valid_range": [
+          800.0,
+          1100.0
+        ]
+      },
+      "cloud_cover": {
+        "min_found": -1.0,
+        "max_found": 101.0,
+        "out_of_bounds_count": 25,
+        "valid_range": [
+          0.0,
+          100.0
+        ]
+      }
+    },
+    "source_partition_audit": {
+      "annual_files_loaded": [
+        "indore_historical_forecast_2021.csv",
+        "indore_historical_forecast_2022.csv",
+        "indore_historical_forecast_2023.csv",
+        "indore_historical_forecast_2024.csv"
+      ],
+      "pilot_files_found": [
+        "indore_historical_forecast_2024-01-01_to_2024-01-31.csv"
+      ],
+      "annual_records_loaded": 103248,
+      "pilot_records_loaded": 2232,
+      "annual_internal_duplicates_count": 0,
+      "pilot_internal_duplicates_count": 0,
+      "superseded_pilot_records_count": 2232,
+      "total_source_duplicates_count": 2232,
+      "precedence_rule": "Annual full-year partition takes strict precedence over partial/pilot partition"
+    }
+  },
+  "training_dataset_summary": {
+    "samples": 35061,
+    "features": 56,
+    "targets": [
+      "target_obs_temperature_2m_lead1h",
+      "target_obs_rain_occurrence_lead1h",
+      "target_obs_precipitation_lead1h"
+    ],
+    "parquet_file": "C:\\Users\\anmol\\Downloads\\weather-major\\ml-service\\data\\processed\\training_dataset.parquet",
+    "csv_file": "C:\\Users\\anmol\\Downloads\\weather-major\\ml-service\\data\\processed\\training_dataset.csv",
+    "nwp_policy": "option_b",
+    "policy_sample_counts": {
+      "option_a_best_match_ecmwf_only": 35061,
+      "option_b_all_models_retained": 35061,
+      "strict_complete_cases": 32774,
+      "gfs_coverage_boundary_cutoff_2021_03_23": 33119,
+      "gfs_coverage_boundary_cutoff_remaining_internal_nulls": {
+        "feat_nwp_precipitation_gfs_seamless": 345
+      },
+      "clean_two_year_cutoff_2023_01_01": 17543
+    }
+  },
+  "leakage_audit": {
+    "status": "PASSED",
+    "reference_time_col": "timestamp_utc",
+    "target_valid_time_col": "target_valid_time_utc",
+    "targets": [
+      "target_obs_temperature_2m_lead1h",
+      "target_obs_rain_occurrence_lead1h",
+      "target_obs_precipitation_lead1h"
+    ],
+    "lead_hours": 1,
+    "nwp_policy_applied": "option_b",
+    "policy_sample_counts": {
+      "option_a_best_match_ecmwf_only": 35061,
+      "option_b_all_models_retained": 35061,
+      "strict_complete_cases": 32774,
+      "gfs_coverage_boundary_cutoff_2021_03_23": 33119,
+      "gfs_coverage_boundary_cutoff_remaining_internal_nulls": {
+        "feat_nwp_precipitation_gfs_seamless": 345
+      },
+      "clean_two_year_cutoff_2023_01_01": 17543
+    },
+    "max_feature_observation_lag": "0h (concurrent or older)",
+    "features_contain_future_observations": false,
+    "training_samples_count": 35061,
+    "feature_count": 56,
+    "feature_columns": [
+      "feat_hour",
+      "feat_day_of_week",
+      "feat_month",
+      "feat_day_of_year",
+      "feat_sin_hour",
+      "feat_cos_hour",
+      "feat_sin_month",
+      "feat_cos_month",
+      "feat_obs_temperature_2m_t0",
+      "feat_obs_temperature_2m_lag1h",
+      "feat_obs_temperature_2m_lag2h",
+      "feat_obs_relative_humidity_2m_t0",
+      "feat_obs_relative_humidity_2m_lag1h",
+      "feat_obs_relative_humidity_2m_lag2h",
+      "feat_obs_dew_point_2m_t0",
+      "feat_obs_dew_point_2m_lag1h",
+      "feat_obs_dew_point_2m_lag2h",
+      "feat_obs_precipitation_t0",
+      "feat_obs_precipitation_lag1h",
+      "feat_obs_precipitation_lag2h",
+      "feat_obs_wind_speed_10m_t0",
+      "feat_obs_wind_speed_10m_lag1h",
+      "feat_obs_wind_speed_10m_lag2h",
+      "feat_obs_wind_direction_10m_t0",
+      "feat_obs_wind_direction_10m_lag1h",
+      "feat_obs_wind_direction_10m_lag2h",
+      "feat_obs_surface_pressure_t0",
+      "feat_obs_surface_pressure_lag1h",
+      "feat_obs_surface_pressure_lag2h",
+      "feat_obs_cloud_cover_t0",
+      "feat_obs_cloud_cover_lag1h",
+      "feat_obs_cloud_cover_lag2h",
+      "feat_nwp_cloud_cover_best_match",
+      "feat_nwp_cloud_cover_ecmwf_ifs",
+      "feat_nwp_cloud_cover_gfs_seamless",
+      "feat_nwp_dew_point_2m_best_match",
+      "feat_nwp_dew_point_2m_ecmwf_ifs",
+      "feat_nwp_dew_point_2m_gfs_seamless",
+      "feat_nwp_precipitation_best_match",
+      "feat_nwp_precipitation_ecmwf_ifs",
+      "feat_nwp_precipitation_gfs_seamless",
+      "feat_nwp_relative_humidity_2m_best_match",
+      "feat_nwp_relative_humidity_2m_ecmwf_ifs",
+      "feat_nwp_relative_humidity_2m_gfs_seamless",
+      "feat_nwp_surface_pressure_best_match",
+      "feat_nwp_surface_pressure_ecmwf_ifs",
+      "feat_nwp_surface_pressure_gfs_seamless",
+      "feat_nwp_temperature_2m_best_match",
+      "feat_nwp_temperature_2m_ecmwf_ifs",
+      "feat_nwp_temperature_2m_gfs_seamless",
+      "feat_nwp_wind_direction_10m_best_match",
+      "feat_nwp_wind_direction_10m_ecmwf_ifs",
+      "feat_nwp_wind_direction_10m_gfs_seamless",
+      "feat_nwp_wind_speed_10m_best_match",
+      "feat_nwp_wind_speed_10m_ecmwf_ifs",
+      "feat_nwp_wind_speed_10m_gfs_seamless"
+    ]
+  }
+}

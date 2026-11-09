@@ -81,17 +81,17 @@ export default function WeatherHero({
   const hasDisagreement = weather.disagreementFlags && weather.disagreementFlags.length > 0;
   const disagreementText = hasDisagreement
     ? weather.disagreementFlags.join(" · ")
-    : "Partly cloudy · Cloudy across providers";
+    : "Providers in consensus";
 
-  // Confidence score calculation
-  const confScore = weather.confidenceScore ?? 92;
-  const confLabel = weather.confidenceLabel || "High Confidence";
-  const agreement = weather.confidenceBreakdown?.agreementScore ?? 90;
-  const freshness = weather.confidenceBreakdown?.freshnessScore ?? 88;
-  const availability = weather.confidenceBreakdown?.availabilityScore ?? 100;
+  // Confidence score calculation (null when insufficient/unavailable data)
+  const confScore = weather.confidenceScore;
+  const confLabel = weather.confidenceLabel || (confScore !== null ? "High Confidence" : "Unavailable");
+  const agreement = weather.confidenceBreakdown?.agreementScore ?? null;
+  const freshness = weather.confidenceBreakdown?.freshnessScore ?? null;
+  const availability = weather.confidenceBreakdown?.availabilityScore ?? null;
 
   // Wind direction degrees
-  const windDeg = s.windDirection ?? 15;
+  const windDeg = s.windDirection ?? 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -223,7 +223,7 @@ export default function WeatherHero({
                   fontFamily: "Inter, sans-serif",
                 }}
               >
-                {s.temperature !== null ? Math.round(s.temperature) : "31"}
+                {s.temperature !== null ? Math.round(s.temperature) : "--"}
               </span>
               <span
                 style={{
@@ -252,10 +252,10 @@ export default function WeatherHero({
             {/* Condition details */}
             <div style={{ display: "flex", flexDirection: "column", gap: 3, paddingBottom: 6 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#101828", letterSpacing: "-0.2px" }}>
-                {s.conditionDescription || "Partly cloudy"}
+                {s.conditionDescription || "Condition unavailable"}
               </div>
               <div style={{ fontSize: 13, color: "#8A96AB", fontWeight: 500 }}>
-                Feels like {s.feelsLike !== null ? Math.round(s.feelsLike) : 30}°C
+                {s.feelsLike !== null ? `Feels like ${Math.round(s.feelsLike)}°C` : "Feels like --°C"}
               </div>
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function WeatherHero({
 
           {/* Value */}
           <div style={{ fontSize: 24, fontWeight: 800, color: "#101828", letterSpacing: "-0.5px", position: "relative", zIndex: 1, marginTop: 8 }}>
-            {s.humidity !== null ? `${Math.round(s.humidity)}%` : "27%"}
+            {s.humidity !== null ? `${Math.round(s.humidity)}%` : "N/A"}
           </div>
         </div>
 
@@ -454,7 +454,7 @@ export default function WeatherHero({
 
           {/* Value */}
           <div style={{ fontSize: 24, fontWeight: 800, color: "#101828", letterSpacing: "-0.5px", position: "relative", zIndex: 1, marginTop: 8 }}>
-            {s.windSpeed !== null ? `${Math.round(s.windSpeed)} km/h` : "7 km/h"}
+            {s.windSpeed !== null ? `${Math.round(s.windSpeed)} km/h` : "N/A"}
           </div>
         </div>
 
@@ -520,7 +520,7 @@ export default function WeatherHero({
 
           {/* Value */}
           <div style={{ fontSize: 24, fontWeight: 800, color: "#101828", letterSpacing: "-0.5px", position: "relative", zIndex: 1, marginTop: 8 }}>
-            {s.precipitation !== null ? `${s.precipitation} mm/h` : "0 mm/h"}
+            {s.precipitation !== null ? `${s.precipitation} mm/h` : "N/A"}
           </div>
         </div>
 
@@ -600,7 +600,7 @@ export default function WeatherHero({
 
           {/* Value */}
           <div style={{ fontSize: 24, fontWeight: 800, color: "#101828", letterSpacing: "-0.5px", position: "relative", zIndex: 1, marginTop: 8 }}>
-            {s.windDirection !== null ? `${s.windDirection}°` : "15°"}
+            {s.windDirection !== null ? `${s.windDirection}°` : "N/A"}
           </div>
         </div>
       </div>
@@ -645,14 +645,14 @@ export default function WeatherHero({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#16A34A", letterSpacing: "-0.5px" }}>
-              {confScore} / 100
+            <span style={{ fontSize: 24, fontWeight: 800, color: confScore !== null ? "#16A34A" : "#667085", letterSpacing: "-0.5px" }}>
+              {confScore !== null ? `${confScore} / 100` : "N/A"}
             </span>
             <span
               style={{
-                background: "#ECFDF3",
-                color: "#16A34A",
-                border: "1px solid #D1FADF",
+                background: confScore !== null ? "#ECFDF3" : "#F2F4F7",
+                color: confScore !== null ? "#16A34A" : "#667085",
+                border: confScore !== null ? "1px solid #D1FADF" : "1px solid #EAECF0",
                 borderRadius: 20,
                 padding: "3px 10px",
                 fontSize: 11.5,
@@ -677,7 +677,7 @@ export default function WeatherHero({
         >
           <div
             style={{
-              width: `${Math.min(100, Math.max(0, confScore))}%`,
+              width: confScore !== null ? `${Math.min(100, Math.max(0, confScore))}%` : "0%",
               height: "100%",
               background: "#16A34A",
               borderRadius: 4,
@@ -707,8 +707,8 @@ export default function WeatherHero({
               <div style={{ fontSize: 11, color: "#667085", fontWeight: 500 }}>
                 Agreement
               </div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#16A34A" }}>
-                {agreement}
+              <div style={{ fontSize: 15, fontWeight: 800, color: agreement !== null ? "#16A34A" : "#667085" }}>
+                {agreement !== null ? agreement : "N/A"}
               </div>
             </div>
           </div>
@@ -727,8 +727,8 @@ export default function WeatherHero({
               <div style={{ fontSize: 11, color: "#667085", fontWeight: 500 }}>
                 Freshness
               </div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#16A34A" }}>
-                {freshness}
+              <div style={{ fontSize: 15, fontWeight: 800, color: freshness !== null ? "#16A34A" : "#667085" }}>
+                {freshness !== null ? freshness : "N/A"}
               </div>
             </div>
           </div>
@@ -748,12 +748,119 @@ export default function WeatherHero({
               <div style={{ fontSize: 11, color: "#667085", fontWeight: 500 }}>
                 Availability
               </div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#16A34A" }}>
-                {availability}
+              <div style={{ fontSize: 15, fontWeight: 800, color: availability !== null ? "#16A34A" : "#667085" }}>
+                {availability !== null ? `${availability}%` : "N/A"}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Shadow Mode ML Prediction Card */}
+        {weather.mlPrediction && (
+          <div
+            style={{
+              marginTop: 16,
+              background: "#F8FAFC",
+              borderRadius: 16,
+              border: "1px dashed #94A3B8",
+              padding: "16px 20px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    background: "#0EA5E9",
+                    color: "#FFFFFF",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.05em",
+                    padding: "2px 8px",
+                    borderRadius: 9999,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Shadow Mode
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+                  WeatherPulse ML Model (Next-Hour Nowcast)
+                </span>
+              </div>
+              <span style={{ fontSize: 11, color: "#64748B" }}>
+                Status:{" "}
+                <strong
+                  style={{
+                    color:
+                      weather.mlPrediction.status === "available"
+                        ? "#16A34A"
+                        : weather.mlPrediction.status === "stale_inputs"
+                        ? "#D97706"
+                        : "#DC2626",
+                  }}
+                >
+                  {weather.mlPrediction.status.toUpperCase()}
+                </strong>
+              </span>
+            </div>
+
+            {weather.mlPrediction.status === "available" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginTop: 10 }}>
+                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Predicted Temp (t+1h)</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A" }}>
+                    {weather.mlPrediction.predictedTemperature !== null
+                      ? `${weather.mlPrediction.predictedTemperature.toFixed(1)}°C`
+                      : "N/A"}
+                  </div>
+                </div>
+
+                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Rain Occurrence Score</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A" }}>
+                    {weather.mlPrediction.rainProbability !== null
+                      ? `${(weather.mlPrediction.rainProbability * 100).toFixed(1)}%`
+                      : "N/A"}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#64748B" }}>
+                    Threshold: {(weather.mlPrediction.rainThreshold * 100).toFixed(1)}%
+                  </div>
+                </div>
+
+                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Rain Classification</div>
+                  <div
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 800,
+                      color: weather.mlPrediction.rainPredicted ? "#2563EB" : "#16A34A",
+                    }}
+                  >
+                    {weather.mlPrediction.rainPredicted ? "Rain Likely" : "No Rain"}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#64748B" }}>
+                    Target: {weather.mlPrediction.targetLeadTimeUtc?.slice(11, 16) || "N/A"} UTC
+                  </div>
+                </div>
+
+                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Model Version</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
+                    {weather.mlPrediction.modelMetadata?.temperatureModelType || "XGBoost"} (32 feats)
+                  </div>
+                  <div style={{ fontSize: 10, color: "#64748B" }}>Source: Open-Meteo Hourly</div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>
+                ML nowcast currently unavailable ({weather.mlPrediction.status}). Real-time multi-provider consensus forecast remains fully operational above.
+              </div>
+            )}
+
+            <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 10, fontStyle: "italic" }}>
+              {weather.mlPrediction.disclaimer}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

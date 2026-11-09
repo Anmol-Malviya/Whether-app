@@ -44,9 +44,6 @@ export async function fetchWeatherApi(
   const enabled = process.env.ENABLE_PROVIDER_WEATHERAPI !== "false";
 
   if (!enabled || !apiKey) {
-    // Return a simulated partial dataset when no key is configured
-    // so the dashboard can demonstrate multi-source behavior without keys
-    const simulated = simulateWeatherData(lat, lon);
     return {
       provider: "weatherapi",
       providerDisplayName: "WeatherAPI",
@@ -54,11 +51,19 @@ export async function fetchWeatherApi(
       locationName,
       lat,
       lon,
-      observedAt: new Date().toISOString(),
+      observedAt: null,
       fetchedAt,
-      ...simulated,
-      providerStatus: !enabled ? "disabled" : "partial",
-      errorMessage: !enabled ? "Provider disabled" : "No API key configured — using estimated data",
+      temperature: null,
+      feelsLike: null,
+      humidity: null,
+      windSpeed: null,
+      windDirection: null,
+      precipitation: null,
+      conditionCode: "unknown",
+      conditionDescription: !enabled ? "Provider disabled" : "API key not configured",
+      weatherIcon: "🌡️",
+      providerStatus: !enabled ? "disabled" : "error",
+      errorMessage: !enabled ? "Provider disabled" : "WEATHERAPI_KEY not configured",
     };
   }
 
@@ -127,27 +132,4 @@ export async function fetchWeatherApi(
       errorMessage: err instanceof Error ? err.message : String(err),
     };
   }
-}
-
-// Simulated data for demonstration when no API key is set
-function simulateWeatherData(lat: number, lon: number) {
-  // Deterministic based on lat/lon so it's consistent
-  const seed = (lat * 100 + lon * 10) % 20;
-  const conditions: ConditionCode[] = ["clear", "partly-cloudy", "cloudy", "rainy"];
-  const conditionCode = conditions[Math.floor(seed / 5) % conditions.length];
-  const icons: Record<ConditionCode, string> = {
-    clear: "☀️", "partly-cloudy": "⛅", cloudy: "☁️", rainy: "🌧️",
-    stormy: "⛈️", foggy: "🌫️", snow: "❄️", unknown: "🌡️",
-  };
-  return {
-    temperature: 28 + Math.round(seed * 0.5),
-    feelsLike: 30 + Math.round(seed * 0.4),
-    humidity: 60 + Math.round(seed * 0.8),
-    windSpeed: 10 + Math.round(seed * 0.7),
-    windDirection: (seed * 18) % 360,
-    precipitation: conditionCode === "rainy" ? 2.4 : 0,
-    conditionCode,
-    conditionDescription: conditionCode.replace("-", " "),
-    weatherIcon: icons[conditionCode],
-  };
 }

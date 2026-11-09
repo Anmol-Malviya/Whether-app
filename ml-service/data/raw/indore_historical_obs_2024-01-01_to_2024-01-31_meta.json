@@ -1,0 +1,38 @@
+{
+  "dataset_type": "historical_observations_raw",
+  "data_source": "Open-Meteo Historical Weather Archive API",
+  "data_provenance": "ECMWF ERA5 / ERA5-Land reanalysis dataset via Open-Meteo",
+  "retrieval_timestamp_utc": "2026-11-09T14:13:51.118538+00:00",
+  "location": {
+    "id": "indore",
+    "name": "Indore",
+    "region": "Madhya Pradesh",
+    "country": "India",
+    "target_lat": 22.7196,
+    "target_lon": 75.8577,
+    "returned_lat": 22.741652,
+    "returned_lon": 75.858475,
+    "elevation": 551.0,
+    "local_timezone": "Asia/Kolkata"
+  },
+  "query_range": {
+    "start_date": "2024-01-01",
+    "end_date": "2024-01-31"
+  },
+  "hourly_units": {
+    "time": "iso8601",
+    "temperature_2m": "\u00b0C",
+    "relative_humidity_2m": "%",
+    "dew_point_2m": "\u00b0C",
+    "precipitation": "mm",
+    "wind_speed_10m": "km/h",
+    "wind_direction_10m": "\u00b0",
+    "surface_pressure": "hPa",
+    "cloud_cover": "%"
+  },
+  "record_count": 744,
+  "output_files": {
+    "raw_json": "C:\\Users\\anmol\\Downloads\\weather-major\\ml-service\\data\\raw\\indore_historical_obs_2024-01-01_to_2024-01-31.json",
+    "raw_csv": "C:\\Users\\anmol\\Downloads\\weather-major\\ml-service\\data\\raw\\indore_historical_obs_2024-01-01_to_2024-01-31.csv"
+  }
+}

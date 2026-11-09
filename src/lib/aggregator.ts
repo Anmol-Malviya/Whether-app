@@ -6,6 +6,7 @@ import { NormalizedWeatherData, WeatherAggregation, ConditionCode } from "@/lib/
 import { fetchOpenMeteo } from "@/lib/providers/open-meteo";
 import { fetchWeatherApi } from "@/lib/providers/weatherapi";
 import { fetchOpenWeather } from "@/lib/providers/openweather";
+import { getMlPrediction } from "@/lib/mlPrediction";
 
 const SUPPORTED_LOCATIONS: Record<string, { lat: number; lon: number; name: string }> = {
   indore: { lat: 22.7196, lon: 75.8577, name: "Indore, Madhya Pradesh" },
@@ -19,6 +20,7 @@ const SUPPORTED_LOCATIONS: Record<string, { lat: number; lon: number; name: stri
   kolkata: { lat: 22.5726, lon: 88.3639, name: "Kolkata, West Bengal" },
   hyderabad: { lat: 17.3850, lon: 78.4867, name: "Hyderabad, Telangana" },
   ujjain: { lat: 23.1765, lon: 75.7885, name: "Ujjain, Madhya Pradesh" },
+  gwalior: { lat: 26.2183, lon: 78.1828, name: "Gwalior, Madhya Pradesh" },
   gwaliar: { lat: 26.2183, lon: 78.1828, name: "Gwalior, Madhya Pradesh" },
   jabalpur: { lat: 23.1815, lon: 79.9864, name: "Jabalpur, Madhya Pradesh" },
 };
@@ -61,7 +63,8 @@ export function resolveLocation(locationId: string, customLat?: number, customLo
 // ─── Scoring helpers ───────────────────────────────────────────────────────────
 
 function calcAgreementScore(providers: NormalizedWeatherData[]): number {
-  const ok = providers.filter((p) => p.providerStatus === "ok" || p.providerStatus === "partial");
+  // Only successful providers with actual observed data contribute to agreement
+  const ok = providers.filter((p) => p.providerStatus === "ok");
   if (ok.length < 2) return ok.length === 1 ? 50 : 0;
 
   const temps = ok.map((p) => p.temperature).filter((t): t is number => t !== null);
@@ -106,15 +109,14 @@ function calcFreshnessScore(providers: NormalizedWeatherData[]): number {
 
 function calcAvailabilityScore(providers: NormalizedWeatherData[]): number {
   if (providers.length === 0) return 0;
-  const okCount = providers.filter(
-    (p) => p.providerStatus === "ok" || p.providerStatus === "partial"
-  ).length;
+  // Availability is the percentage of enabled providers that successfully returned data
+  const okCount = providers.filter((p) => p.providerStatus === "ok").length;
   return Math.round((okCount / providers.length) * 100);
 }
 
 function getDisagreementFlags(providers: NormalizedWeatherData[]): string[] {
   const flags: string[] = [];
-  const ok = providers.filter((p) => p.providerStatus === "ok" || p.providerStatus === "partial");
+  const ok = providers.filter((p) => p.providerStatus === "ok");
   if (ok.length < 2) return flags;
 
   const temps = ok.map((p) => p.temperature).filter((t): t is number => t !== null);
@@ -134,7 +136,7 @@ function getDisagreementFlags(providers: NormalizedWeatherData[]): string[] {
 }
 
 function computeConsensus(providers: NormalizedWeatherData[]): WeatherAggregation["summary"] {
-  const ok = providers.filter((p) => p.providerStatus === "ok" || p.providerStatus === "partial");
+  const ok = providers.filter((p) => p.providerStatus === "ok");
 
   const avg = <T extends number>(vals: (T | null)[]): T | null => {
     const valid = vals.filter((v): v is T => v !== null);
@@ -192,16 +194,18 @@ export async function aggregateWeather(
   const validUntil = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min cache
 
   // Fetch all providers in parallel; individual errors are caught inside adapters (FR-004)
-  const [openMeteo, weatherApi, openWeather] = await Promise.all([
+  const [openMeteo, weatherApi, openWeather, mlPrediction] = await Promise.all([
     fetchOpenMeteo(loc.lat, loc.lon, loc.id, loc.name),
     fetchWeatherApi(loc.lat, loc.lon, loc.id, loc.name),
     fetchOpenWeather(loc.lat, loc.lon, loc.id, loc.name),
+    getMlPrediction(loc.lat, loc.lon).catch((err) => {
+      console.warn("[aggregator] ML prediction fetch error:", err);
+      return undefined;
+    }),
   ]);
 
   const providers = [openMeteo, weatherApi, openWeather];
-  const okProviders = providers.filter(
-    (p) => p.providerStatus === "ok" || p.providerStatus === "partial"
-  );
+  const okProviders = providers.filter((p) => p.providerStatus === "ok");
 
   // FR-013: insufficient data state
   if (okProviders.length === 0) {
@@ -224,6 +228,7 @@ export async function aggregateWeather(
       disagreementFlags: ["All providers failed or are unavailable"],
       providers,
       stale: false,
+      mlPrediction,
     };
   }
 
@@ -250,5 +255,6 @@ export async function aggregateWeather(
     disagreementFlags: getDisagreementFlags(providers),
     providers,
     stale: false,
+    mlPrediction,
   };
 }

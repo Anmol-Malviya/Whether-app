@@ -8,13 +8,14 @@ import MomentsFeed from "@/components/MomentsFeed";
 import Navbar from "@/components/Navbar";
 import CameraCapture from "@/components/CameraCapture";
 import OfficerTriagePanel from "@/components/OfficerTriagePanel";
+import ShadowMonitoringDashboard from "@/components/ShadowMonitoringDashboard";
 
 export default function HomePage() {
   const [weather, setWeather] = useState<WeatherAggregation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "sources" | "moments" | "triage">(
+  const [activeTab, setActiveTab] = useState<"dashboard" | "sources" | "shadow" | "moments" | "triage">(
     "dashboard"
   );
   const [location, setLocation] = useState("indore");
@@ -186,6 +187,12 @@ export default function HomePage() {
         {activeTab === "sources" && (
           <div className="fade-up">
             <SourceBreakdown weather={weather} loading={loading} />
+          </div>
+        )}
+
+        {activeTab === "shadow" && (
+          <div className="fade-up" style={{ maxWidth: 800, margin: "0 auto" }}>
+            <ShadowMonitoringDashboard />
           </div>
         )}
 

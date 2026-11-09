@@ -1,0 +1,324 @@
+{
+  "metadata": {
+    "dataset": "ml-service\\data\\processed\\training_dataset.csv",
+    "total_samples": 35061,
+    "features_option": "Option A (48 features, excluding GFS)",
+    "target_horizon": "+1 hour (lead1h)",
+    "splits": {
+      "train": {
+        "rows": 24542,
+        "fraction": 0.7,
+        "start_utc": "2021-01-01 02:00:00+00:00",
+        "end_utc": "2023-10-20 15:00:00+00:00"
+      },
+      "validation": {
+        "rows": 5259,
+        "fraction": 0.15,
+        "start_utc": "2023-10-20 16:00:00+00:00",
+        "end_utc": "2024-05-26 18:00:00+00:00"
+      },
+      "test": {
+        "rows": 5260,
+        "fraction": 0.15,
+        "start_utc": "2024-05-26 19:00:00+00:00",
+        "end_utc": "2024-12-31 22:00:00+00:00"
+      }
+    },
+    "software_versions": {
+      "python": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]",
+      "xgboost": "3.4.1",
+      "scikit_learn": "1.8.0",
+      "joblib": "1.5.3"
+    }
+  },
+  "temperature_model": {
+    "algorithm": "XGBRegressor",
+    "target": "target_obs_temperature_2m_lead1h",
+    "feature_count": 48,
+    "metrics": {
+      "train": {
+        "model": {
+          "mae": 0.011,
+          "rmse": 0.0287,
+          "r2": 1.0,
+          "bias": 0.0
+        },
+        "persistence": {
+          "mae": 0.9503,
+          "rmse": 1.3091,
+          "r2": 0.9533,
+          "bias": -0.0004
+        }
+      },
+      "validation": {
+        "model": {
+          "mae": 0.0261,
+          "rmse": 0.1153,
+          "r2": 0.9997,
+          "bias": -0.0073
+        },
+        "persistence": {
+          "mae": 1.1033,
+          "rmse": 1.4663,
+          "r2": 0.9572,
+          "bias": -0.0017
+        }
+      },
+      "test": {
+        "model": {
+          "mae": 0.008,
+          "rmse": 0.0277,
+          "r2": 1.0,
+          "bias": -0.0001
+        },
+        "persistence": {
+          "mae": 0.778,
+          "rmse": 1.0695,
+          "r2": 0.9466,
+          "bias": 0.0037
+        }
+      },
+      "test_improvement": {
+        "mae_improvement_pct": 98.97,
+        "rmse_improvement_pct": 97.41
+      }
+    },
+    "diagnostic_obs_only_metrics": {
+      "val": {
+        "mae": 0.4655,
+        "rmse": 0.678,
+        "r2": 0.9908,
+        "bias": -0.0813
+      },
+      "test": {
+        "mae": 0.4237,
+        "rmse": 0.6347,
+        "r2": 0.9812,
+        "bias": -0.0814
+      }
+    }
+  },
+  "rain_occurrence_model": {
+    "algorithm": "XGBClassifier",
+    "target": "target_obs_rain_occurrence_lead1h",
+    "feature_count": 48,
+    "selected_threshold_val": 0.01,
+    "metrics": {
+      "train": {
+        "model": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "confusion_matrix": [
+            [
+              20523,
+              0
+            ],
+            [
+              0,
+              4019
+            ]
+          ],
+          "pr_auc": 1.0,
+          "roc_auc": 1.0,
+          "brier_score": 0.0
+        },
+        "persistence": {
+          "precision": 0.7922,
+          "recall": 0.7922,
+          "f1": 0.7922,
+          "confusion_matrix": [
+            [
+              19688,
+              835
+            ],
+            [
+              835,
+              3184
+            ]
+          ],
+          "pr_auc": 0.1638,
+          "roc_auc": 0.5,
+          "brier_score": 0.1369
+        }
+      },
+      "validation": {
+        "model": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "confusion_matrix": [
+            [
+              5151,
+              0
+            ],
+            [
+              0,
+              108
+            ]
+          ],
+          "pr_auc": 1.0,
+          "roc_auc": 1.0,
+          "brier_score": 0.0
+        },
+        "persistence": {
+          "precision": 0.537,
+          "recall": 0.537,
+          "f1": 0.537,
+          "confusion_matrix": [
+            [
+              5101,
+              50
+            ],
+            [
+              50,
+              58
+            ]
+          ],
+          "pr_auc": 0.0205,
+          "roc_auc": 0.5,
+          "brier_score": 0.0406
+        }
+      },
+      "test": {
+        "model": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "confusion_matrix": [
+            [
+              3892,
+              0
+            ],
+            [
+              0,
+              1368
+            ]
+          ],
+          "pr_auc": 1.0,
+          "roc_auc": 1.0,
+          "brier_score": 0.0
+        },
+        "persistence": {
+          "precision": 0.799,
+          "recall": 0.799,
+          "f1": 0.799,
+          "confusion_matrix": [
+            [
+              3617,
+              275
+            ],
+            [
+              275,
+              1093
+            ]
+          ],
+          "pr_auc": 0.2601,
+          "roc_auc": 0.5,
+          "brier_score": 0.2017
+        }
+      }
+    },
+    "diagnostic_obs_only_metrics": {
+      "selected_threshold": 0.5346,
+      "val": {
+        "precision": 0.618,
+        "recall": 0.5093,
+        "f1": 0.5584,
+        "confusion_matrix": [
+          [
+            5117,
+            34
+          ],
+          [
+            53,
+            55
+          ]
+        ],
+        "pr_auc": 0.5329,
+        "roc_auc": 0.9452,
+        "brier_score": 0.0159
+      },
+      "test": {
+        "precision": 0.6583,
+        "recall": 0.9196,
+        "f1": 0.7673,
+        "confusion_matrix": [
+          [
+            3239,
+            653
+          ],
+          [
+            110,
+            1258
+          ]
+        ],
+        "pr_auc": 0.8843,
+        "roc_auc": 0.9545,
+        "brier_score": 0.1062
+      }
+    }
+  },
+  "rainfall_amount_distribution": {
+    "overall": {
+      "total_samples": 35061,
+      "zero_count": 29566,
+      "zero_percentage": 84.33,
+      "nonzero_count": 5495,
+      "nonzero_percentage": 15.67,
+      "nonzero_min": 0.1,
+      "nonzero_max": 27.6,
+      "nonzero_mean": 0.8452,
+      "nonzero_median": 0.2,
+      "nonzero_std": 1.6896,
+      "p75": 0.8,
+      "p90": 2.2,
+      "p99": 7.9
+    },
+    "train": {
+      "total_samples": 24542,
+      "zero_count": 20523,
+      "zero_percentage": 83.62,
+      "nonzero_count": 4019,
+      "nonzero_percentage": 16.38,
+      "nonzero_min": 0.1,
+      "nonzero_max": 27.6,
+      "nonzero_mean": 0.8695,
+      "nonzero_median": 0.2,
+      "nonzero_std": 1.7595,
+      "p75": 0.8,
+      "p90": 2.3,
+      "p99": 8.1
+    },
+    "validation": {
+      "total_samples": 5259,
+      "zero_count": 5151,
+      "zero_percentage": 97.95,
+      "nonzero_count": 108,
+      "nonzero_percentage": 2.05,
+      "nonzero_min": 0.1,
+      "nonzero_max": 17.9,
+      "nonzero_mean": 0.8889,
+      "nonzero_median": 0.2,
+      "nonzero_std": 2.0413,
+      "p75": 0.625,
+      "p90": 2.46,
+      "p99": 6.96
+    },
+    "test": {
+      "total_samples": 5260,
+      "zero_count": 3892,
+      "zero_percentage": 73.99,
+      "nonzero_count": 1368,
+      "nonzero_percentage": 26.01,
+      "nonzero_min": 0.1,
+      "nonzero_max": 15.0,
+      "nonzero_mean": 0.7705,
+      "nonzero_median": 0.2,
+      "nonzero_std": 1.4268,
+      "p75": 0.7,
+      "p90": 2.0,
+      "p99": 6.998
+    }
+  }
+}

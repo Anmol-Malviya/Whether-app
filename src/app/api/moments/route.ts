@@ -1,30 +1,16 @@
 import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import Moment from "@/models/Moment";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const MAX_CAPTION_LENGTH = 280;
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MOMENT_EXPIRY_MS = parseInt(process.env.MOMENT_EXPIRY_MINUTES ?? "60") * 60 * 1000;
-
-// Rate limiting: simple in-memory (production: use Redis/Upstash)
-const uploadCounts = new Map<string, { count: number; resetAt: number }>();
 const MAX_UPLOADS_PER_HOUR = 5;
 
 function getRateLimitKey(request: NextRequest): string {
-  return request.headers.get("x-forwarded-for") ?? "unknown";
-}
-
-function checkRateLimit(key: string): boolean {
-  const now = Date.now();
-  const entry = uploadCounts.get(key);
-  if (!entry || now > entry.resetAt) {
-    uploadCounts.set(key, { count: 1, resetAt: now + 3600_000 });
-    return true;
-  }
-  if (entry.count >= MAX_UPLOADS_PER_HOUR) return false;
-  entry.count++;
-  return true;
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown_client";
 }
 
 // GET /api/moments?location=indore
@@ -75,7 +61,8 @@ export async function GET(request: NextRequest) {
 // POST /api/moments — upload a new Moment
 export async function POST(request: NextRequest) {
   const rateLimitKey = getRateLimitKey(request);
-  if (!checkRateLimit(rateLimitKey)) {
+  const rateLimitResult = await checkRateLimit(rateLimitKey, MAX_UPLOADS_PER_HOUR, 3600_000);
+  if (!rateLimitResult.success) {
     return Response.json(
       { error: "Upload rate limit exceeded. Please try again later." },
       { status: 429 }

@@ -38,7 +38,6 @@ export async function fetchOpenWeather(
   const enabled = process.env.ENABLE_PROVIDER_OPENWEATHER !== "false";
 
   if (!enabled || !apiKey) {
-    const simulated = simulateOwmData(lat, lon);
     return {
       provider: "openweathermap",
       providerDisplayName: "OpenWeatherMap",
@@ -46,11 +45,19 @@ export async function fetchOpenWeather(
       locationName,
       lat,
       lon,
-      observedAt: new Date().toISOString(),
+      observedAt: null,
       fetchedAt,
-      ...simulated,
-      providerStatus: !enabled ? "disabled" : "partial",
-      errorMessage: !enabled ? "Provider disabled" : "No API key configured — using estimated data",
+      temperature: null,
+      feelsLike: null,
+      humidity: null,
+      windSpeed: null,
+      windDirection: null,
+      precipitation: null,
+      conditionCode: "unknown",
+      conditionDescription: !enabled ? "Provider disabled" : "API key not configured",
+      weatherIcon: "🌡️",
+      providerStatus: !enabled ? "disabled" : "error",
+      errorMessage: !enabled ? "Provider disabled" : "OPENWEATHER_KEY not configured",
     };
   }
 
@@ -123,25 +130,4 @@ export async function fetchOpenWeather(
       errorMessage: err instanceof Error ? err.message : String(err),
     };
   }
-}
-
-function simulateOwmData(lat: number, lon: number) {
-  const seed = (lat * 73 + lon * 17) % 25;
-  const conditions: ConditionCode[] = ["clear", "partly-cloudy", "cloudy", "rainy", "cloudy"];
-  const conditionCode = conditions[Math.floor(seed / 5) % conditions.length];
-  const icons: Record<ConditionCode, string> = {
-    clear: "☀️", "partly-cloudy": "⛅", cloudy: "☁️", rainy: "🌧️",
-    stormy: "⛈️", foggy: "🌫️", snow: "❄️", unknown: "🌡️",
-  };
-  return {
-    temperature: 26 + Math.round(seed * 0.6),
-    feelsLike: 29 + Math.round(seed * 0.5),
-    humidity: 55 + Math.round(seed * 1.2),
-    windSpeed: 8 + Math.round(seed * 0.8),
-    windDirection: (seed * 15) % 360,
-    precipitation: conditionCode === "rainy" ? 1.8 : 0,
-    conditionCode,
-    conditionDescription: conditionCode.replace("-", " "),
-    weatherIcon: icons[conditionCode],
-  };
 }

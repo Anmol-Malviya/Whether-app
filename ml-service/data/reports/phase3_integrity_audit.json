@@ -1,0 +1,148 @@
+{
+  "audit_version": "1.0.0",
+  "audit_timestamp_utc": "2026-11-09T14:20:00Z",
+  "audit_target": "WeatherPulse Phase 3 Historical Dataset Pipeline (Indore Pilot, Jan 2024)",
+  "overall_verdict": "PILOT_CONDITIONAL_APPROVAL_WITH_CORRECTIONS",
+  "task1_data_verification": {
+    "file_inventory": {
+      "raw_observations_csv": {
+        "path": "ml-service/data/raw/indore_historical_obs_2024-01-01_to_2024-01-31.csv",
+        "rows": 744,
+        "columns": 12,
+        "size_bytes": 62560
+      },
+      "raw_forecast_csv": {
+        "path": "ml-service/data/raw/indore_historical_forecast_2024-01-01_to_2024-01-31.csv",
+        "rows": 2232,
+        "columns": 15,
+        "size_bytes": 284234
+      },
+      "processed_observations_parquet": {
+        "path": "ml-service/data/processed/historical_observations.parquet",
+        "rows": 744,
+        "columns": 14,
+        "size_bytes": 28353
+      },
+      "processed_forecast_parquet": {
+        "path": "ml-service/data/processed/historical_forecasts.parquet",
+        "rows": 2232,
+        "columns": 17,
+        "size_bytes": 37258
+      },
+      "processed_training_parquet": {
+        "path": "ml-service/data/processed/training_dataset.parquet",
+        "rows": 741,
+        "columns": 58,
+        "size_bytes": 114825
+      }
+    },
+    "timestamp_ranges": {
+      "observations_start_utc": "2024-01-01 00:00:00+00:00",
+      "observations_end_utc": "2024-01-31 23:00:00+00:00",
+      "forecast_start_utc": "2024-01-01 00:00:00+00:00",
+      "forecast_end_utc": "2024-01-31 23:00:00+00:00",
+      "training_start_utc": "2024-01-01 02:00:00+00:00",
+      "training_end_utc": "2024-01-31 22:00:00+00:00"
+    },
+    "duplicates_found": {
+      "observations": 0,
+      "forecasts": 0,
+      "training_dataset": 0
+    },
+    "missing_values": {
+      "observations": 0,
+      "forecasts": 0,
+      "training_dataset": 0
+    },
+    "numerical_ranges_verified": {
+      "temperature_2m_degC": {"min": 9.0, "max": 27.9, "status": "PHYSICALLY_REALISTIC"},
+      "relative_humidity_2m_pct": {"min": 25.0, "max": 100.0, "status": "PHYSICALLY_REALISTIC"},
+      "dew_point_2m_degC": {"min": 1.0, "max": 18.2, "status": "PHYSICALLY_REALISTIC"},
+      "precipitation_mm": {"min": 0.0, "max": 17.9, "status": "PHYSICALLY_REALISTIC"},
+      "wind_speed_10m_kmh": {"min": 0.4, "max": 16.6, "status": "PHYSICALLY_REALISTIC"},
+      "surface_pressure_hPa": {"min": 946.0, "max": 957.5, "status": "PHYSICALLY_REALISTIC"},
+      "cloud_cover_pct": {"min": 0.0, "max": 100.0, "status": "PHYSICALLY_REALISTIC"}
+    },
+    "raw_vs_processed_agreement": "100% agreement on matched columns. Processed datasets added explicit UTC datetime types, local ISO timestamps, and standardized column orders."
+  },
+  "task2_forecast_provenance": {
+    "models_preserved": ["best_match", "ecmwf_ifs", "gfs_seamless"],
+    "model_identifier_preserved": true,
+    "forecast_valid_timestamp_preserved": true,
+    "forecast_initialization_timestamp_available": false,
+    "forecast_lead_time_explicit": false,
+    "lead_time_limitation_details": "Open-Meteo Historical Forecast API provides seamlessly blended operational model forecasts reconstructed per valid timestamp. The specific model run initialization cycle (e.g. 00Z or 12Z run cycle) and exact operational run dissemination latency are NOT returned by the API endpoint. In collect_forecast_archive.py, lead_time_hours_nominal is assigned a static placeholder of 0.",
+    "provenance_risk_level": "MODERATE_LIMITATION"
+  },
+  "task3_leakage_audit": {
+    "observation_lags": {
+      "status": "PASSED_STRICT",
+      "lags_present": ["t0 (current observation)", "lag1h (t - 1h)", "lag2h (t - 2h)"],
+      "future_observations_in_features": false
+    },
+    "target_horizon": {
+      "status": "PASSED_STRICT",
+      "lead_time_hours": 1.0,
+      "horizon_formula": "target_valid_time_utc = timestamp_utc + 1 hour",
+      "future_observations_as_features": false
+    },
+    "nwp_forecast_features": {
+      "status": "CAUTION_PROVENANCE_ASSUMPTION",
+      "feature_join_key": "Joined on target_valid_time_utc (t + 1h)",
+      "details": "NWP forecast columns (feat_nwp_*_best_match, ecmwf_ifs, gfs_seamless) match valid time t+1h. Because Open-Meteo Historical Forecast does not return the initialization run timestamp, it assumes the NWP forecast valid for t+1h was already published before decision time t. While operational NWP runs typically release forecasts 12 to 24 hours in advance, short-lead NWP data assimilation delays mean 0h/1h forecasts might suffer from operational availability lag in live production without an explicit lead-time buffer."
+    },
+    "duplicate_targets_or_join_multiplication": false
+  },
+  "task4_rainfall_validation": {
+    "total_hours_jan2024": 744,
+    "zero_rain_hours": 707,
+    "zero_rain_percentage": 95.03,
+    "non_zero_rain_hours": 37,
+    "non_zero_rain_percentage": 4.97,
+    "measurable_rain_hours_ge_0_1mm": 37,
+    "significant_rain_hours_ge_1_0mm": 6,
+    "heavy_rain_hours_ge_5_0mm": 1,
+    "max_hourly_rain_mm": 17.9,
+    "total_month_rain_mm": 35.7,
+    "rainfall_targets_in_training_parquet": {
+      "status": "INCOMPLETE",
+      "temperature_target_present": true,
+      "rain_classification_target_present": false,
+      "rain_amount_target_present": false,
+      "required_correction": "training_dataset.parquet currently only includes target_obs_temperature_2m_lead1h. It must be updated to also include target_obs_rain_occurrence_lead1h (binary classification) and target_obs_precipitation_lead1h (continuous regression)."
+    }
+  },
+  "task5_training_readiness": {
+    "overall_readiness": "PILOT_ONLY_INSUFFICIENT_FOR_PRODUCTION_TRAINING",
+    "temperature_forecasting": {
+      "status": "FEASIBLE_FOR_BASELINE_EXPERIMENTS_ONLY",
+      "reasons": "741 samples cover only a single winter month (January 2024, temps 9.0C - 27.9C). Training on this will severely overfit to winter conditions and will fail during pre-monsoon summer (40C+) and monsoon seasons."
+    },
+    "rain_probability_classification": {
+      "status": "UNSUITABLE_SEVERE_CLASS_IMBALANCE",
+      "reasons": "Only 37 positive rain events across the entire month (95% zero-rain class). A trivial model predicting no-rain achieves 95% accuracy without learning precipitation dynamics."
+    },
+    "rainfall_amount_prediction": {
+      "status": "UNSUITABLE_EXTREME_SPARSITY",
+      "reasons": "Only 6 hours had rainfall >= 1.0 mm, concentrated in a single 2-day winter disturbance (Jan 7-8). Completely unrepresentative of convective monsoon precipitation regimes."
+    }
+  },
+  "task6_recommendations_and_corrections": [
+    {
+      "priority": "HIGH",
+      "item": "Add precipitation targets to preprocess.py",
+      "description": "Add target_obs_rain_occurrence_lead1h and target_obs_precipitation_lead1h to training_dataset.parquet."
+    },
+    {
+      "priority": "HIGH",
+      "item": "Document NWP initialization timestamp limitation",
+      "description": "Explicitly document in data provenance that Open-Meteo Historical Forecast does not provide run-cycle metadata (00Z/12Z init time), and establish an operational buffer (e.g. 2h+ lead time) for live deployment."
+    },
+    {
+      "priority": "CRITICAL",
+      "item": "Approve multi-year data collection (2021-2024)",
+      "description": "Approve expanding collection to 3-4 years (minimum 26,000 to 35,000 hours) to capture full Indian monsoon seasons, pre-monsoon heatwaves, and seasonal convective shifts before model training."
+    }
+  ]
+}
+
