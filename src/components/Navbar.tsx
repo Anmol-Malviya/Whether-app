@@ -95,6 +95,33 @@ export default function Navbar({
           )}
         </div>
 
+        {/* Desktop Navigation Links for Wide Screens */}
+        <div className="hidden md:flex" style={{ alignItems: "center", gap: 6 }}>
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className="btn-compact"
+                style={{
+                  padding: "6px 12px",
+                  fontSize: 12.5,
+                  fontWeight: isActive ? 600 : 500,
+                  borderRadius: "var(--radius)",
+                  border: "none",
+                  cursor: "pointer",
+                  background: isActive ? "var(--accent-light)" : "transparent",
+                  color: isActive ? "var(--accent)" : "var(--text-secondary)",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Right actions: Location Selector, Bell, Profile */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Header Location Selector for ML Monitoring view on desktop */}
@@ -327,9 +354,10 @@ export default function Navbar({
       </div>
       )}
 
-      {/* ── Fixed Bottom Navigation Bar matching screenshot ── */}
+      {/* ── Fixed Bottom Navigation Bar matching screenshot (Mobile only) ── */}
       <nav
         id="mobile-bottom-nav"
+        className="md:hidden"
         style={{
           position: "fixed",
           bottom: 0,

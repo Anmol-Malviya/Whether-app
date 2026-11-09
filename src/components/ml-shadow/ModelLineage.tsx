@@ -31,39 +31,84 @@ export default function ModelLineage({ metrics }: ModelLineageProps) {
           </p>
         </div>
 
-        <div style={{ marginTop: 10, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid var(--border)", gap: 12 }}>
-            <span style={{ fontSize: 12.5, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 }}>Temperature Model</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", textAlign: "right", wordBreak: "break-word" }}>
+        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* Row 1 */}
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "var(--surface-hover)",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+              Temperature Model
+            </span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", wordBreak: "break-word" }}>
               {meta?.temperatureModelType || "XGBoost Regressor v1 (Lead t+1)"}
             </span>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid var(--border)", gap: 12 }}>
-            <span style={{ fontSize: 12.5, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 }}>Rain Model</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", textAlign: "right", wordBreak: "break-word" }}>
+          {/* Row 2 */}
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "var(--surface-hover)",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+              Rain Model
+            </span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", wordBreak: "break-word" }}>
               {meta?.rainModelType || "XGBoost Classifier v1 (Binary Precip)"}
             </span>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid var(--border)", gap: 12 }}>
-            <span style={{ fontSize: 12.5, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 }}>Feature Pipeline</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", textAlign: "right", wordBreak: "break-word" }}>
+          {/* Row 3 */}
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "var(--surface-hover)",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+              Feature Pipeline
+            </span>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", wordBreak: "break-word" }}>
               {meta?.datasetVersion || "Phase 3.3 Engineered Features (14 predictors)"}
             </span>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid var(--border)", gap: 12 }}>
-            <span style={{ fontSize: 12.5, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 }}>Verification Source</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", textAlign: "right", wordBreak: "break-word" }}>
-              {meta?.inputSource || "Open-Meteo Verified Ground Truth (ERA5 / Forecast)"}
+          {/* Row 4 */}
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "var(--surface-hover)",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+              Verification Source
             </span>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", gap: 12 }}>
-            <span style={{ fontSize: 12.5, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 }}>Model Update Status</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", textAlign: "right", wordBreak: "break-word" }}>
-              Active Operational Weights
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", fontFamily: "var(--font-mono, monospace)", wordBreak: "break-word" }}>
+              {meta?.inputSource || "Open-Meteo Verified Ground Truth (ERA5 / Forecast)"}
             </span>
           </div>
         </div>

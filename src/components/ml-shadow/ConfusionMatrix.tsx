@@ -40,59 +40,135 @@ export default function ConfusionMatrix({ metrics }: ConfusionMatrixProps) {
         </p>
 
         <div style={{ marginTop: 16, overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 6, fontSize: 12 }}>
             <thead>
               <tr>
-                <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: 600, color: "var(--text-secondary)", width: "30%", borderBottom: "1px solid var(--border)" }}>
-                  Ground Truth
-                </th>
-                <th style={{ padding: "8px 10px", textAlign: "center", fontWeight: 600, color: "var(--text-secondary)", width: "35%", borderBottom: "1px solid var(--border)" }}>
+                <th style={{ width: "30%", padding: "6px 8px" }}></th>
+                <th
+                  style={{
+                    width: "35%",
+                    padding: "8px 10px",
+                    textAlign: "center",
+                    fontWeight: 600,
+                    fontSize: 11.5,
+                    color: "var(--text-secondary)",
+                    background: "var(--surface-hover)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
                   Predicted Rain (+)
                 </th>
-                <th style={{ padding: "8px 10px", textAlign: "center", fontWeight: 600, color: "var(--text-secondary)", width: "35%", borderBottom: "1px solid var(--border)" }}>
+                <th
+                  style={{
+                    width: "35%",
+                    padding: "8px 10px",
+                    textAlign: "center",
+                    fontWeight: 600,
+                    fontSize: 11.5,
+                    color: "var(--text-secondary)",
+                    background: "var(--surface-hover)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
                   Predicted No Rain (-)
                 </th>
               </tr>
             </thead>
             <tbody>
-              {/* Row 1: Actual Positive */}
+              {/* Row 1: Actual Rain (+) */}
               <tr>
-                <td style={{ padding: "10px", fontWeight: 600, color: "var(--text-primary)", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", background: "var(--surface-hover)" }}>
+                <td
+                  style={{
+                    padding: "10px 12px",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                    background: "var(--surface-hover)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--border)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   Actual Rain (+)
                 </td>
                 {/* TP - Emerald */}
-                <td style={{ padding: "8px", borderBottom: "1px solid var(--border)" }}>
-                  <div style={{ padding: "10px", borderRadius: "var(--radius)", background: "var(--green-light)", border: "1px solid var(--green-border)", textAlign: "center" }}>
+                <td>
+                  <div
+                    style={{
+                      padding: "12px 10px",
+                      borderRadius: "var(--radius)",
+                      background: "var(--green-light)",
+                      border: "1px solid var(--green-border)",
+                      textAlign: "center",
+                    }}
+                  >
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--green)" }}>True Positive (TP)</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--green)", marginTop: 2 }}>{cm.tp}</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: "var(--green)", marginTop: 2 }}>{cm.tp}</div>
                   </div>
                 </td>
                 {/* FN - Red */}
-                <td style={{ padding: "8px", borderBottom: "1px solid var(--border)" }}>
-                  <div style={{ padding: "10px", borderRadius: "var(--radius)", background: "var(--red-light)", border: "1px solid var(--red-border)", textAlign: "center" }}>
+                <td>
+                  <div
+                    style={{
+                      padding: "12px 10px",
+                      borderRadius: "var(--radius)",
+                      background: "var(--red-light)",
+                      border: "1px solid var(--red-border)",
+                      textAlign: "center",
+                    }}
+                  >
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--red)" }}>False Negative (FN)</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--red)", marginTop: 2 }}>{cm.fn}</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: "var(--red)", marginTop: 2 }}>{cm.fn}</div>
                   </div>
                 </td>
               </tr>
 
-              {/* Row 2: Actual Negative */}
+              {/* Row 2: Actual No Rain (-) */}
               <tr>
-                <td style={{ padding: "10px", fontWeight: 600, color: "var(--text-primary)", borderRight: "1px solid var(--border)", background: "var(--surface-hover)" }}>
+                <td
+                  style={{
+                    padding: "10px 12px",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    color: "var(--text-primary)",
+                    background: "var(--surface-hover)",
+                    borderRadius: "var(--radius)",
+                    border: "1px solid var(--border)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   Actual No Rain (-)
                 </td>
                 {/* FP - Red */}
-                <td style={{ padding: "8px" }}>
-                  <div style={{ padding: "10px", borderRadius: "var(--radius)", background: "var(--red-light)", border: "1px solid var(--red-border)", textAlign: "center" }}>
+                <td>
+                  <div
+                    style={{
+                      padding: "12px 10px",
+                      borderRadius: "var(--radius)",
+                      background: "var(--red-light)",
+                      border: "1px solid var(--red-border)",
+                      textAlign: "center",
+                    }}
+                  >
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--red)" }}>False Positive (FP)</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--red)", marginTop: 2 }}>{cm.fp}</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: "var(--red)", marginTop: 2 }}>{cm.fp}</div>
                   </div>
                 </td>
                 {/* TN - Blue/Neutral */}
-                <td style={{ padding: "8px" }}>
-                  <div style={{ padding: "10px", borderRadius: "var(--radius)", background: "var(--accent-light)", border: "1px solid var(--accent-border)", textAlign: "center" }}>
+                <td>
+                  <div
+                    style={{
+                      padding: "12px 10px",
+                      borderRadius: "var(--radius)",
+                      background: "var(--accent-light)",
+                      border: "1px solid var(--accent-border)",
+                      textAlign: "center",
+                    }}
+                  >
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--accent)" }}>True Negative (TN)</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--accent)", marginTop: 2 }}>{cm.tn}</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: "var(--accent)", marginTop: 2 }}>{cm.tn}</div>
                   </div>
                 </td>
               </tr>
@@ -102,8 +178,8 @@ export default function ConfusionMatrix({ metrics }: ConfusionMatrixProps) {
       </div>
 
       <div style={{ marginTop: 18, paddingTop: 12, borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--text-secondary)", display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
-        <span>Correct: <strong style={{ color: "var(--green)", fontWeight: 600 }}>{cm.tp + cm.tn}</strong></span>
-        <span>Errors: <strong style={{ color: "var(--red)", fontWeight: 600 }}>{cm.fp + cm.fn}</strong></span>
+        <span>Correct classifications: <strong style={{ color: "var(--green)", fontWeight: 600 }}>{cm.tp + cm.tn}</strong></span>
+        <span>Misclassifications: <strong style={{ color: "var(--red)", fontWeight: 600 }}>{cm.fp + cm.fn}</strong></span>
       </div>
     </div>
   );

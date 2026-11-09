@@ -174,7 +174,7 @@ export default function HomePage() {
         style={{
           width: "100%",
           maxWidth: activeTab === "shadow" ? 1440 : 440,
-          padding: activeTab === "shadow" ? "0 24px 140px" : "0 16px 110px",
+          padding: activeTab === "shadow" ? "0 24px 80px" : "0 16px 110px",
           boxSizing: "border-box",
           transition: "max-width 0.2s ease",
         }}
