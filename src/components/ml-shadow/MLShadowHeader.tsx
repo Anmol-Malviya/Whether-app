@@ -76,7 +76,7 @@ export default function MLShadowHeader({
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {lastUpdated && (
           <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>
-            Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            Updated {lastUpdated.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })}
           </span>
         )}
         <button

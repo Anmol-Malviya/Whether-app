@@ -1,6 +1,7 @@
 "use client";
 
 import { WeatherAggregation } from "@/lib/types/weather";
+import HourlyForecastStrip from "./HourlyForecastStrip";
 
 interface WeatherHeroProps {
   weather: WeatherAggregation | null;
@@ -600,6 +601,9 @@ export default function WeatherHero({
           </div>
         </div>
       </div>
+
+      {/* ── Hourly Forecast Strip (Now, 11:00 pm, 12:00 am...) ── */}
+      <HourlyForecastStrip items={weather.hourlyForecast} />
 
       {/* ── E. Confidence Score Card ── */}
       <div

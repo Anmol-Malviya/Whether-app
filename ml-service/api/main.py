@@ -1,18 +1,23 @@
 import logging
+import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, status, HTTPException
+from fastapi import FastAPI, Request, status, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from typing import Optional
 
 from api.config import settings
 from api.schemas import (
     PredictionRequest,
     PredictionResponse,
     HealthResponse,
-    ModelInfoResponse
+    HealthReadyResponse,
+    InferenceMetricsSummary,
+    ModelInfoResponse,
 )
 from api.predictor import predictor
+from api.inference_metrics import metrics_store
 
 logging.basicConfig(
     level=logging.INFO,
@@ -116,6 +121,19 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
+@app.get("/")
+async def root():
+    """Friendly welcome endpoint directing clients to documentation and health check."""
+    return {
+        "service": "WeatherPulse ML Prediction Service",
+        "status": "operational",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "ready_url": "/health/ready",
+        "models_info_url": "/models/info",
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 async def get_health():
     """
@@ -146,7 +164,9 @@ async def get_health():
         status=overall_status,
         temperature_model_loaded=temp_loaded,
         rain_model_loaded=rain_loaded,
-        model_versions=model_versions
+        model_versions=model_versions,
+        inference_metrics=InferenceMetricsSummary(**metrics_store.get_summary()),
+        service_uptime_s=metrics_store.get_summary()["uptime_seconds"],
     )
 
 
@@ -180,17 +200,68 @@ async def predict_weather(request: PredictionRequest):
             detail="ML models are not loaded or currently unavailable."
         )
 
+    start = time.perf_counter()
     try:
         response = predictor.predict(request)
+        metrics_store.record_success((time.perf_counter() - start) * 1000)
         return response
     except ValueError as ve:
+        metrics_store.record_failure()
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(ve)
         )
     except Exception as e:
+        metrics_store.record_failure()
         logger.error(f"Inference error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Inference execution failed: {str(e)}"
         )
+
+
+@app.get("/health/ready", response_model=HealthReadyResponse)
+async def get_health_ready():
+    """
+    Readiness probe:
+    - Checks whether both ML models are fully loaded and available.
+    - Always returns HTTP 200; callers should inspect the `ready` field.
+    """
+    temp_loaded = predictor.temp_model is not None
+    rain_loaded = predictor.rain_model is not None
+    ready = predictor.is_loaded and temp_loaded and rain_loaded
+    feature_count = len(predictor.features)
+
+    if ready:
+        message = "All models loaded and ready"
+    else:
+        message = (
+            f"Models not ready: temperature_model={temp_loaded}, "
+            f"rain_model={rain_loaded}"
+        )
+
+    return HealthReadyResponse(
+        ready=ready,
+        temperature_model_loaded=temp_loaded,
+        rain_model_loaded=rain_loaded,
+        feature_count=feature_count,
+        message=message,
+    )
+
+
+@app.get("/inference/metrics", response_model=InferenceMetricsSummary)
+async def get_inference_metrics(x_admin_key: Optional[str] = Header(default=None)):
+    """
+    Returns detailed inference metrics (admin-only).
+
+    Requires the ``X-Admin-Key`` header to match the ``ADMIN_API_KEY``
+    environment variable. Returns 403 when the key is absent, wrong, or
+    when ``ADMIN_API_KEY`` has not been configured.
+    """
+    configured_key: Optional[str] = settings.ADMIN_API_KEY
+    if not configured_key or x_admin_key != configured_key:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"error": "Forbidden"},
+        )
+    return InferenceMetricsSummary(**metrics_store.get_summary())

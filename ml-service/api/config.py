@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     
     # Request constraints
     MAX_REQUEST_BODY_BYTES: int = 100_000  # Sensible payload limit (100 KB)
+
+    # Admin API key for protected operational endpoints (optional)
+    ADMIN_API_KEY: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -61,6 +61,14 @@ export interface ShadowRecord {
   evaluationStatus: string;
   failureStatus?: string;
   failureReason?: string;
+  // ── Diagnostic fields ──────────────────────────────────────────────────
+  failureCode?: string;
+  failureStage?: string;
+  inferenceLatencyMs?: number | null;
+  retryCount?: number;
+  httpStatusCode?: number | null;
+  inputFeatureAvailability?: InputFeatureAvailability;
+  // ───────────────────────────────────────────────────────────────────────
   actualOutcome?: {
     verifiedAtUtc: string;
     actualTemperature: number;
@@ -80,4 +88,118 @@ export interface HistoryPagination {
   totalPages: number;
   hasMore: boolean;
 }
+
+// ── Diagnostics types ────────────────────────────────────────────────────────
+
+export interface InputFeatureAvailability {
+  temperature_2m: boolean;
+  relative_humidity_2m: boolean;
+  dew_point_2m: boolean;
+  precipitation: boolean;
+  wind_speed_10m: boolean;
+  wind_direction_10m: boolean;
+  surface_pressure: boolean;
+  cloud_cover: boolean;
+  observationCount: number;
+  intervalsValid: boolean;
+}
+
+export interface InferenceHealthMetrics {
+  totalRequests: number;
+  successfulPredictions: number;
+  failedPredictions: number;
+  successRate: number | null;
+  failureRate: number | null;
+  avgLatencyMs: number | null;
+  p95LatencyMs: number | null;
+  lastSuccessAt: string | null;
+  lastFailureAt: string | null;
+}
+
+export interface FailureDistributionEntry {
+  code: string;
+  count: number;
+  percentage: number;
+}
+
+export interface FailureRecord {
+  id: string;
+  targetLeadTimeUtc: string;
+  generatedAt: string;
+  failureCode: string;
+  failureStage: string | null;
+  failureReason: string | null;
+  retryCount: number;
+  httpStatusCode: number | null;
+  inferenceLatencyMs: number | null;
+  inputFeatureAvailability: InputFeatureAvailability | null;
+  datasetVersion: string | null;
+  evaluationAttempts: number;
+}
+
+export interface DiagnosticsData {
+  range: string;
+  inferenceHealth: InferenceHealthMetrics;
+  failureDistribution: FailureDistributionEntry[];
+  recentFailures: FailureRecord[];
+}
+
+// ── Service health types ─────────────────────────────────────────────────────
+
+export type ServiceStatus = "healthy" | "degraded" | "unavailable" | "unknown";
+
+export interface ServiceCheck {
+  status: ServiceStatus;
+  responseTimeMs: number | null;
+  detail: string;
+  modelReady?: boolean;
+  featureCount?: number;
+}
+
+export interface ServiceHealthData {
+  checkedAt: string;
+  overallStatus: ServiceStatus;
+  services: {
+    mlService: ServiceCheck;
+    database: ServiceCheck;
+    weatherProvider: ServiceCheck;
+  };
+}
+
+// ── Prediction detail types ─────────────────────────────────────────────────
+
+export interface PredictionDetail {
+  id: string;
+  evaluationKey: string;
+  locationId: string;
+  coordinates: { lat: number; lon: number };
+  targetLeadTimeUtc: string;
+  generatedAt: string;
+  datasetVersion: string | null;
+  inputSource: string;
+  inputTimestamps: string[];
+  prediction: {
+    temperature: number | null;
+    rainProbability: number | null;
+    rainClass: boolean | null;
+    rainThreshold: number;
+  };
+  evaluation: {
+    status: string;
+    attempts: number;
+    lastError: string | null;
+  };
+  failure: {
+    code: string;
+    stage: string | null;
+    reason: string | null;
+    httpStatusCode: number | null;
+    retryCount: number;
+    inferenceLatencyMs: number | null;
+  } | null;
+  inputFeatureAvailability: InputFeatureAvailability | null;
+  providerMetadata: Record<string, unknown>;
+  actualOutcome: ShadowRecord["actualOutcome"] | null;
+}
+
 

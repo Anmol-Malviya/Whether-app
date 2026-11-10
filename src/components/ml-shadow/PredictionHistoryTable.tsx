@@ -3,6 +3,7 @@
 import React from "react";
 import { ShadowRecord, HistoryPagination } from "./types";
 import { ChevronLeft, ChevronRight, Inbox } from "lucide-react";
+import { formatUtcTime12h } from "./timeUtils";
 
 interface PredictionHistoryTableProps {
   history: ShadowRecord[];
@@ -118,9 +119,7 @@ export default function PredictionHistoryTable({
             ) : (
               // Data Rows
               history.map((rec) => {
-                const targetTime = rec.targetLeadTimeUtc
-                  ? rec.targetLeadTimeUtc.slice(5, 16).replace("T", " ")
-                  : "N/A";
+                const targetTime = formatUtcTime12h(rec.targetLeadTimeUtc, true);
                 const predTemp =
                   rec.predictedTemperature !== null && rec.predictedTemperature !== undefined
                     ? `${rec.predictedTemperature.toFixed(1)}°C`

@@ -80,7 +80,9 @@ export async function fetchOpenMeteo(
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,` +
-    `weather_code,wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh&timezone=Asia%2FKolkata`;
+    `weather_code,wind_speed_10m,wind_direction_10m` +
+    `&hourly=temperature_2m,precipitation,weather_code,relative_humidity_2m` +
+    `&forecast_days=2&wind_speed_unit=kmh&timezone=Asia%2FKolkata`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);

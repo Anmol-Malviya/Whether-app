@@ -1,6 +1,6 @@
 import { MlPredictionPayload } from "@/lib/types/weather";
 import { connectToDatabase } from "@/lib/db";
-import { MlEvaluation, ensureMlEvaluationIndexes } from "@/lib/models/MlEvaluation";
+import { MlEvaluation, ensureMlEvaluationIndexes, FailureCode, FailureStage, InputFeatureAvailability } from "@/lib/models/MlEvaluation";
 
 export interface HourlyObservationInput {
   timestamp_utc: string;
@@ -12,6 +12,129 @@ export interface HourlyObservationInput {
   wind_direction_10m: number;
   surface_pressure: number;
   cloud_cover: number;
+}
+
+/** Structured classification of an ML inference failure. */
+interface FailureClassification {
+  code: FailureCode;
+  stage: FailureStage;
+}
+
+/**
+ * Classifies a raw error message from the ML inference pipeline into a
+ * structured { code, stage } pair. Never guesses — only maps known patterns.
+ * Falls back to UNKNOWN_ERROR if the error does not match any known pattern.
+ */
+function classifyFailure(errorMsg: string, httpStatus?: number): FailureClassification {
+  const msg = errorMsg.toLowerCase();
+
+  // Timeout — AbortError or timeout message
+  if (msg.includes("aborterror") || msg.includes("abort") || msg.includes("timed out") || msg.includes("timeout")) {
+    return { code: "ML_SERVICE_TIMEOUT", stage: "ml_service_connection" };
+  }
+
+  // Network / service unreachable
+  if (
+    msg.includes("econnrefused") ||
+    msg.includes("econnreset") ||
+    msg.includes("network") ||
+    msg.includes("fetch failed") ||
+    msg.includes("failed to fetch") ||
+    msg.includes("connect etimedout") ||
+    msg.includes("service unavailable")
+  ) {
+    return { code: "ML_SERVICE_UNAVAILABLE", stage: "ml_service_connection" };
+  }
+
+  // HTTP status-based classification
+  if (httpStatus !== undefined) {
+    if (httpStatus === 422 || httpStatus === 400) {
+      return { code: "INPUT_VALIDATION_FAILED", stage: "input_validation" };
+    }
+    if (httpStatus >= 400 && httpStatus < 600) {
+      return { code: "ML_HTTP_ERROR", stage: "model_inference" };
+    }
+  }
+  if (msg.includes("http 4") || msg.includes("http 5") || msg.startsWith("http ")) {
+    return { code: "ML_HTTP_ERROR", stage: "model_inference" };
+  }
+
+  // Model output validation
+  if (msg.includes("nan") || msg.includes("invalid model output") || msg.includes("response validation")) {
+    return { code: "INVALID_MODEL_OUTPUT", stage: "prediction_response_validation" };
+  }
+
+  // Database persistence failure
+  if (msg.includes("database") || msg.includes("write timed out") || msg.includes("mongo") || msg.includes("persistence")) {
+    return { code: "DB_WRITE_FAILED", stage: "database_persistence" };
+  }
+
+  return { code: "UNKNOWN_ERROR", stage: "model_inference" };
+}
+
+/**
+ * Builds InputFeatureAvailability from an hourly data payload.
+ * Inspects the last 3 completed past records to record per-variable availability.
+ */
+function buildFeatureAvailability(
+  hourly: Record<string, unknown>,
+  nowUtcMs: number = Date.now()
+): InputFeatureAvailability {
+  const times = hourly.time as string[] | undefined;
+  const vars = [
+    "temperature_2m", "relative_humidity_2m", "dew_point_2m",
+    "precipitation", "wind_speed_10m", "wind_direction_10m",
+    "surface_pressure", "cloud_cover"
+  ] as const;
+
+  // Default: all unavailable
+  const avail: InputFeatureAvailability = {
+    temperature_2m: false,
+    relative_humidity_2m: false,
+    dew_point_2m: false,
+    precipitation: false,
+    wind_speed_10m: false,
+    wind_direction_10m: false,
+    surface_pressure: false,
+    cloud_cover: false,
+    observationCount: 0,
+    intervalsValid: false,
+  };
+
+  if (!times || !Array.isArray(times)) return avail;
+
+  const completedIndices: number[] = [];
+  for (let i = 0; i < times.length; i++) {
+    const rawTime = times[i];
+    const timeWithZ = rawTime.endsWith("Z") ? rawTime : `${rawTime}:00Z`;
+    const recordMs = new Date(timeWithZ).getTime();
+    if (!isNaN(recordMs) && recordMs <= nowUtcMs) completedIndices.push(i);
+  }
+
+  avail.observationCount = completedIndices.length;
+  if (completedIndices.length < 3) return avail;
+
+  const selectedIndices = completedIndices.slice(-3);
+
+  // Check per-variable availability across all 3 selected observations
+  for (const varName of vars) {
+    const arr = hourly[varName] as (number | null)[] | undefined;
+    if (!arr) { avail[varName] = false; continue; }
+    avail[varName] = selectedIndices.every((idx) => {
+      const v = arr[idx];
+      return v !== null && v !== undefined && Number.isFinite(v);
+    });
+  }
+
+  // Check interval validity
+  if (selectedIndices.length === 3) {
+    const t0 = new Date((times[selectedIndices[0]].endsWith("Z") ? times[selectedIndices[0]] : `${times[selectedIndices[0]]}:00Z`)).getTime();
+    const t1 = new Date((times[selectedIndices[1]].endsWith("Z") ? times[selectedIndices[1]] : `${times[selectedIndices[1]]}:00Z`)).getTime();
+    const t2 = new Date((times[selectedIndices[2]].endsWith("Z") ? times[selectedIndices[2]] : `${times[selectedIndices[2]]}:00Z`)).getTime();
+    avail.intervalsValid = (t1 - t0 === 3600000) && (t2 - t1 === 3600000);
+  }
+
+  return avail;
 }
 
 const DEFAULT_ML_SERVICE_URL = "http://127.0.0.1:8000";
@@ -152,6 +275,18 @@ export async function fetchLiveHourlyObservations(
   lat: number,
   lon: number
 ): Promise<{ observations: HourlyObservationInput[]; stale: boolean; reason?: string }> {
+  return fetchLiveHourlyObservationsWithRaw(lat, lon, null);
+}
+
+/**
+ * Internal variant that also writes the raw hourly payload to `rawOut`
+ * so that `buildFeatureAvailability()` can inspect it without a second HTTP call.
+ */
+async function fetchLiveHourlyObservationsWithRaw(
+  lat: number,
+  lon: number,
+  rawOut: { data: Record<string, unknown> | null } | null
+): Promise<{ observations: HourlyObservationInput[]; stale: boolean; reason?: string }> {
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,` +
@@ -170,6 +305,7 @@ export async function fetchLiveHourlyObservations(
     }
 
     const data = await res.json();
+    if (rawOut) rawOut.data = data.hourly ?? {};
     return parseAndValidateObservations(data.hourly ?? {});
   } catch (err: unknown) {
     clearTimeout(timeoutId);
@@ -201,6 +337,14 @@ export async function persistShadowPrediction(recordData: {
   failureStatus?: string;
   failureReason?: string;
   evaluationStatus: "pending" | "failed_prediction";
+  // ── Diagnostic fields ──────────────────────────────────────────────────
+  failureCode?: FailureCode;
+  failureStage?: FailureStage;
+  inferenceLatencyMs?: number | null;
+  retryCount?: number;
+  httpStatusCode?: number | null;
+  inputFeatureAvailability?: InputFeatureAvailability;
+  // ───────────────────────────────────────────────────────────────────────
 }): Promise<{ success: boolean; duplicate?: boolean; error?: string }> {
   const evaluationKey = `${recordData.locationId}_obs_only_v1_${recordData.targetLeadTimeUtc.toISOString()}`;
 
@@ -267,6 +411,8 @@ export async function persistShadowPrediction(recordData: {
 
 /**
  * Predicts next-hour weather in SHADOW MODE.
+ * Captures structured failure diagnostics (code, stage, latency, retryCount, httpStatusCode)
+ * alongside existing shadow evaluation records.
  */
 export async function getMlPrediction(
   lat: number,
@@ -277,7 +423,10 @@ export async function getMlPrediction(
   const serviceBaseUrl = process.env.ML_SERVICE_URL || DEFAULT_ML_SERVICE_URL;
   const predictEndpoint = `${serviceBaseUrl.replace(/\/$/, "")}/predict`;
 
-  const { observations, stale } = await fetchLiveHourlyObservations(lat, lon);
+  // Fetch hourly observations AND capture the raw hourly payload for feature availability tracking
+  const rawHourlyForAvailability: { data: Record<string, unknown> | null } = { data: null };
+  const fetchResult = await fetchLiveHourlyObservationsWithRaw(lat, lon, rawHourlyForAvailability);
+  const { observations, stale } = fetchResult;
 
   if (observations.length !== 3) {
     const status = stale ? "stale_inputs" : "unavailable";
@@ -308,6 +457,11 @@ export async function getMlPrediction(
     };
   }
 
+  // Capture feature availability from raw hourly payload
+  const inputFeatureAvailability = rawHourlyForAvailability.data
+    ? buildFeatureAvailability(rawHourlyForAvailability.data)
+    : undefined;
+
   const payload = { observations };
   const targetLeadTime = new Date(new Date(observations[2].timestamp_utc).getTime() + 3600000);
 
@@ -315,11 +469,14 @@ export async function getMlPrediction(
   let attempt = 0;
   const maxAttempts = 2;
   let lastErrorMsg = "";
+  let lastHttpStatus: number | undefined;
+  let totalLatencyMs: number | null = null;
 
   while (attempt < maxAttempts) {
     attempt++;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const attemptStart = performance.now();
 
     try {
       const response = await fetch(predictEndpoint, {
@@ -329,8 +486,10 @@ export async function getMlPrediction(
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+      const attemptLatencyMs = performance.now() - attemptStart;
 
       if (response.ok) {
+        totalLatencyMs = attemptLatencyMs;
         const data = await response.json();
         const predictedTemp = data.temperature_celsius_prediction;
         const rainProb = data.rain_probability;
@@ -351,11 +510,14 @@ export async function getMlPrediction(
           rainThreshold: rainThresh,
           targetLeadTimeUtc: targetLeadTime,
           providerMetadata: {
-            serviceUrl: serviceBaseUrl,
             endpoint: "/predict",
             systemVersions: data.model_version?.system_versions,
           },
           evaluationStatus: "pending",
+          inferenceLatencyMs: Math.round(totalLatencyMs),
+          retryCount: attempt - 1,
+          httpStatusCode: response.status,
+          inputFeatureAvailability,
         });
 
         const persistenceStatus = persistResult.success
@@ -382,6 +544,7 @@ export async function getMlPrediction(
           disclaimer: DISCLAIMER_TEXT,
         };
       } else {
+        lastHttpStatus = response.status;
         lastErrorMsg = `HTTP ${response.status}: ${await response.text()}`;
         // If 4xx client/validation error, do not retry
         if (response.status >= 400 && response.status < 500) {
@@ -401,6 +564,9 @@ export async function getMlPrediction(
     }
   }
 
+  // Classify the failure into a structured code + stage
+  const { code: failureCode, stage: failureStage } = classifyFailure(lastErrorMsg, lastHttpStatus);
+
   // Record failure state in shadow log within controlled timeout
   const failPersistResult = await persistShadowPrediction({
     locationId,
@@ -418,6 +584,12 @@ export async function getMlPrediction(
     failureStatus: "unavailable",
     failureReason: lastErrorMsg,
     evaluationStatus: "failed_prediction",
+    failureCode,
+    failureStage,
+    inferenceLatencyMs: totalLatencyMs,
+    retryCount: attempt - 1,
+    httpStatusCode: lastHttpStatus ?? null,
+    inputFeatureAvailability,
   });
 
   return {

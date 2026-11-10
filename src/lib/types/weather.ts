@@ -24,6 +24,16 @@ export interface NormalizedWeatherData {
   rawData?: unknown;
 }
 
+export interface HourlyForecastItem {
+  time: string; // ISO string e.g. "2026-11-10T23:00"
+  hourLabel: string; // e.g. "Now", "11:00 pm", "12:00 am"
+  temperature: number; // °C
+  precipitation: number; // mm
+  conditionCode: string;
+  weatherIcon: string;
+  isNight: boolean;
+}
+
 export interface WeatherAggregation {
   locationId: string;
   locationName: string;
@@ -53,6 +63,7 @@ export interface WeatherAggregation {
   providers: NormalizedWeatherData[];
   stale: boolean;
   mlPrediction?: MlPredictionPayload;
+  hourlyForecast?: HourlyForecastItem[];
 }
 
 export interface MlPredictionPayload {

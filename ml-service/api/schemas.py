@@ -161,11 +161,34 @@ class PredictionResponse(BaseModel):
     )
 
 
+class HealthReadyResponse(BaseModel):
+    ready: bool
+    temperature_model_loaded: bool
+    rain_model_loaded: bool
+    feature_count: int
+    message: str  # human-readable readiness summary
+
+
+class InferenceMetricsSummary(BaseModel):
+    total_requests: int
+    successful_requests: int
+    failed_requests: int
+    success_rate: Optional[float]  # 0.0-1.0
+    failure_rate: Optional[float]
+    avg_latency_ms: Optional[float]
+    p95_latency_ms: Optional[float]
+    uptime_seconds: float
+    last_success_at: Optional[str]  # ISO UTC
+    last_failure_at: Optional[str]  # ISO UTC
+
+
 class HealthResponse(BaseModel):
     status: str = Field(..., description="'healthy' or 'degraded'")
     temperature_model_loaded: bool
     rain_model_loaded: bool
     model_versions: Dict[str, Any]
+    inference_metrics: Optional[InferenceMetricsSummary] = None
+    service_uptime_s: Optional[float] = None
 
 
 class ModelInfoResponse(BaseModel):

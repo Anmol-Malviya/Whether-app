@@ -2,7 +2,7 @@
 // Implements FR-008 through FR-015, NFR-005
 // Score weights: 40% agreement, 30% freshness, 30% availability
 
-import { NormalizedWeatherData, WeatherAggregation, ConditionCode } from "@/lib/types/weather";
+import { NormalizedWeatherData, WeatherAggregation, ConditionCode, HourlyForecastItem } from "@/lib/types/weather";
 import { fetchOpenMeteo } from "@/lib/providers/open-meteo";
 import { fetchWeatherApi } from "@/lib/providers/weatherapi";
 import { fetchOpenWeather } from "@/lib/providers/openweather";
@@ -241,6 +241,67 @@ export async function aggregateWeather(
     agreementScore * 0.4 + freshnessScore * 0.3 + availabilityScore * 0.3
   );
 
+  // Extract 24-hour future forecast items from openMeteo rawData
+  let hourlyForecast: HourlyForecastItem[] | undefined = undefined;
+  const rawHourly = (openMeteo?.rawData as Record<string, unknown>)?.hourly as {
+    time?: string[];
+    temperature_2m?: number[];
+    precipitation?: number[];
+    weather_code?: number[];
+  } | undefined;
+
+  if (rawHourly?.time && Array.isArray(rawHourly.time)) {
+    const nowLocalMs = Date.now();
+    const items: HourlyForecastItem[] = [];
+    const times = rawHourly.time;
+    const temps = rawHourly.temperature_2m || [];
+    const precips = rawHourly.precipitation || [];
+    const codes = rawHourly.weather_code || [];
+
+    // Find current or upcoming hour index
+    for (let i = 0; i < times.length && items.length < 24; i++) {
+      const timeStr = times[i];
+      const itemDate = new Date(timeStr.includes("Z") ? timeStr : `${timeStr}:00+05:30`);
+      
+      // We take upcoming hours starting from the current hour
+      if (itemDate.getTime() >= nowLocalMs - 45 * 60 * 1000) {
+        const hourNum = itemDate.getHours();
+        const isNight = hourNum < 6 || hourNum >= 18;
+        const codeNum = codes[i] ?? 0;
+        
+        let icon = "☀️";
+        if (codeNum >= 51 && codeNum <= 82) icon = "🌧️";
+        else if (codeNum >= 95) icon = "⛈️";
+        else if (codeNum === 1 || codeNum === 2) icon = isNight ? "🌙" : "⛅";
+        else if (codeNum === 3) icon = "☁️";
+        else if (codeNum >= 45 && codeNum <= 48) icon = "🌫️";
+        else icon = isNight ? "🌙" : "☀️";
+
+        let hourLabel = "";
+        if (items.length === 0) {
+          hourLabel = "Now";
+        } else {
+          const h12 = hourNum % 12 || 12;
+          const ampm = hourNum >= 12 ? "pm" : "am";
+          hourLabel = `${h12}:00 ${ampm}`;
+        }
+
+        items.push({
+          time: timeStr,
+          hourLabel,
+          temperature: Math.round(temps[i] ?? 0),
+          precipitation: precips[i] ?? 0,
+          conditionCode: codeNum >= 51 ? "rainy" : codeNum > 0 ? "partly-cloudy" : "clear",
+          weatherIcon: icon,
+          isNight,
+        });
+      }
+    }
+    if (items.length > 0) {
+      hourlyForecast = items;
+    }
+  }
+
   return {
     locationId: loc.id,
     locationName: loc.name,
@@ -256,5 +317,6 @@ export async function aggregateWeather(
     providers,
     stale: false,
     mlPrediction,
+    hourlyForecast,
   };
 }

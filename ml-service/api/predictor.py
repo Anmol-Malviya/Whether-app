@@ -31,9 +31,22 @@ class ModelPredictor:
         """
         Loads models from disk configured in settings.
         Maintains model configuration, versions, and validation-selected rain threshold.
+        Supports both workspace-root and ml-service subfolder working directories.
         """
         temp_path = Path(settings.TEMPERATURE_MODEL_PATH)
         rain_path = Path(settings.RAIN_MODEL_PATH)
+
+        # Fallback if launched from ml-service/ directly
+        if not temp_path.exists() and (Path("models") / temp_path.name).exists():
+            temp_path = Path("models") / temp_path.name
+        if not rain_path.exists() and (Path("models") / rain_path.name).exists():
+            rain_path = Path("models") / rain_path.name
+
+        # Fallback if launched from repo root
+        if not temp_path.exists() and (Path("ml-service/models") / temp_path.name).exists():
+            temp_path = Path("ml-service/models") / temp_path.name
+        if not rain_path.exists() and (Path("ml-service/models") / rain_path.name).exists():
+            rain_path = Path("ml-service/models") / rain_path.name
 
         if not temp_path.exists():
             raise FileNotFoundError(f"Temperature model artifact not found at {temp_path.resolve()}")
