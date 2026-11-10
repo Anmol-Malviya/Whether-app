@@ -137,16 +137,16 @@ export default function SourceBreakdown({ weather, loading }: { weather: Weather
   const okCount = weather.providers.filter(p => p.providerStatus === "ok").length;
 
   return (
-    <div style={{ marginTop: 24 }}>
+    <div style={{ width: "100%", maxWidth: 1080, margin: "16px auto 0" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Data Sources</h2>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>Data Sources</h2>
+        <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
           {okCount} of {weather.providers.length} live
         </span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {weather.providers.map(p => <ProviderCard key={p.provider} p={p} />)}
       </div>
 

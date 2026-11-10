@@ -115,7 +115,7 @@ export default function OfficerTriagePanel({ location, coords }: OfficerTriagePa
   });
 
   return (
-    <div style={{ width: "100%", padding: "16px 0 40px" }}>
+    <div style={{ width: "100%", maxWidth: 1200, margin: "0 auto", padding: "16px 0 40px" }}>
       {/* Officer Header Card */}
       <div
         style={{
@@ -431,7 +431,7 @@ export default function OfficerTriagePanel({ location, coords }: OfficerTriagePa
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredClusters.map((cluster) => {
             const isCritical = cluster.priority === "CRITICAL";
             const isCorroborated = cluster.verificationStatus === "corroborated" || cluster.verificationStatus === "confirmed";

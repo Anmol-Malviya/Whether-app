@@ -171,16 +171,16 @@ export default function HomePage() {
       />
 
       <main
+        className="app-main-content"
         style={{
           width: "100%",
-          maxWidth: activeTab === "shadow" ? 1440 : 440,
-          padding: activeTab === "shadow" ? "0 24px 80px" : "0 16px 110px",
+          maxWidth: 1440,
+          padding: "0 24px 40px",
           boxSizing: "border-box",
-          transition: "max-width 0.2s ease",
         }}
       >
         {activeTab === "dashboard" && (
-          <div className="fade-up">
+          <div className="fade-up w-full">
             <WeatherHero
               weather={weather}
               loading={loading}
@@ -193,7 +193,7 @@ export default function HomePage() {
         )}
 
         {activeTab === "sources" && (
-          <div className="fade-up">
+          <div className="fade-up w-full">
             <SourceBreakdown weather={weather} loading={loading} />
           </div>
         )}
@@ -205,62 +205,60 @@ export default function HomePage() {
         )}
 
         {activeTab === "moments" && (
-          <div className="fade-up">
+          <div className="fade-up w-full">
             <MomentsFeed location={location} />
           </div>
         )}
 
         {activeTab === "triage" && (
-          <div className="fade-up">
+          <div className="fade-up w-full">
             <OfficerTriagePanel location={location} coords={coords} />
           </div>
         )}
       </main>
 
-      {/* ── Floating Blue Camera Button (Hidden on ML Shadow tab to prevent overlap with monitoring metrics) ── */}
+      {/* ── Floating Blue Camera Button (Hidden on ML Shadow tab) ── */}
       {!showCamera && activeTab !== "shadow" && (
         <div
+          className="fab-container"
           style={{
             position: "fixed",
-            bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "100%",
-            maxWidth: 440,
-            pointerEvents: "none",
             zIndex: 150,
           }}
         >
-          <div style={{ position: "relative", width: "100%", height: 0 }}>
-            <button
-              id="fab-camera-btn"
-              onClick={() => setShowCamera(true)}
-              title="Share a moment"
-              style={{
-                position: "absolute",
-                right: 18,
-                bottom: 0,
-                width: 52,
-                height: 52,
-                borderRadius: "50%",
-                background: "#2165F5",
-                border: "3px solid #FFFFFF",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 6px 20px rgba(33, 101, 245, 0.4)",
-                color: "#ffffff",
-                pointerEvents: "auto",
-                transition: "transform 0.15s ease, box-shadow 0.15s ease",
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            </button>
-          </div>
+          <button
+            id="fab-camera-btn"
+            onClick={() => setShowCamera(true)}
+            title="Share a moment"
+            aria-label="Take weather photo and share a moment"
+            style={{
+              width: 54,
+              height: 54,
+              borderRadius: "50%",
+              background: "#2165F5",
+              border: "3px solid #FFFFFF",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 6px 20px rgba(33, 101, 245, 0.4)",
+              color: "#ffffff",
+              transition: "transform 0.15s ease, box-shadow 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.08)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(33, 101, 245, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 6px 20px rgba(33, 101, 245, 0.4)";
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </button>
         </div>
       )}
 

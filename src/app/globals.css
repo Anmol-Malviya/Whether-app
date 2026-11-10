@@ -193,25 +193,32 @@ body {
   line-height: 1;
 }
 
-/* ── Mobile: safe-area + touch fixes ── */
-@media (max-width: 639px) {
+/* ── Responsive Layout & Safe-Area ── */
+@media (max-width: 767px) {
   body {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Ensure tappable targets are at least 44px */
+  /* Ensure tappable targets are accessible on touch devices */
   button:not(.btn-compact), [role="button"]:not(.btn-compact) {
-    min-height: 36px;
+    min-height: 38px;
   }
 
-  /* Cards: tighter padding on phones */
+  /* Cards: comfortable padding on phones */
   .card {
     border-radius: var(--radius);
   }
 
-  /* Main content: account for bottom nav (~64px) */
-  main {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  /* Main content on mobile: account for fixed bottom nav (60px) + safe area inset */
+  main.app-main-content {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@media (min-width: 768px) {
+  /* On tablet and desktop, bottom navigation is hidden; restore normal flow */
+  main.app-main-content {
+    padding-bottom: 40px !important;
   }
 }
 
@@ -222,12 +229,30 @@ body {
   }
 }
 
-/* ── FAB: move above bottom nav on mobile ── */
-@media (max-width: 639px) {
-  #fab-camera-btn {
+/* ── Responsive FAB (Camera Button) ── */
+@media (max-width: 767px) {
+  .fab-container {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
     right: 16px !important;
+    left: auto !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  #fab-camera-btn {
     width: 50px !important;
     height: 50px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .fab-container {
+    bottom: 28px !important;
+    right: 28px !important;
+    left: auto !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
   }
 }
 

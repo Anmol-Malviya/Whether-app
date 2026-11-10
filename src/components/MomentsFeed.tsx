@@ -193,9 +193,9 @@ export default function MomentsFeed({ location }: { location: string }) {
   const handleReport = (id: string) => setMoments(prev => prev.filter(m => m._id !== id));
 
   return (
-    <div style={{ marginTop: 24 }}>
+    <div style={{ width: "100%", maxWidth: 1200, margin: "16px auto 0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>
           Community Moments
         </h2>
         <button className="btn btn-ghost" onClick={fetch_} style={{ padding: "4px 12px", fontSize: 12 }}>
@@ -218,8 +218,8 @@ export default function MomentsFeed({ location }: { location: string }) {
       </div>
 
       {loading && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 260 }} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: 280, borderRadius: 16 }} />)}
         </div>
       )}
 
@@ -244,7 +244,7 @@ export default function MomentsFeed({ location }: { location: string }) {
       )}
 
       {!loading && !error && moments.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {moments.map(m => <MomentCard key={m._id} moment={m} onReport={handleReport} />)}
         </div>
       )}

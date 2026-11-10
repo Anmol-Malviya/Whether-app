@@ -94,7 +94,7 @@ export default function WeatherHero({
   const windDeg = s.windDirection ?? 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", maxWidth: 1080, margin: "0 auto" }}>
       {/* ── B. Main Weather Hero Card ── */}
       <div
         style={{
@@ -104,7 +104,7 @@ export default function WeatherHero({
           border: "1px solid #DCE7F5",
           boxShadow: "0 4px 20px rgba(33, 101, 245, 0.05)",
           overflow: "hidden",
-          padding: "22px 20px 18px",
+          padding: "24px 22px 20px",
         }}
       >
         {/* Sky Background Photograph in top-right with soft gradient mask */}
@@ -327,13 +327,9 @@ export default function WeatherHero({
         </div>
       </div>
 
-      {/* ── D. Weather Metric Cards (2x2 Grid) ── */}
+      {/* ── D. Weather Metric Cards (Adaptive Responsive Grid: 2 on mobile, 4 on desktop/tablet) ── */}
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 12,
-        }}
+        className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
       >
         {/* Card 1: HUMIDITY */}
         <div
