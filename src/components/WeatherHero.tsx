@@ -101,11 +101,11 @@ export default function WeatherHero({
         style={{
           position: "relative",
           background: "#FFFFFF",
-          borderRadius: 24,
+          borderRadius: 20,
           border: "1px solid #DCE7F5",
-          boxShadow: "0 4px 20px rgba(33, 101, 245, 0.05)",
+          boxShadow: "0 2px 14px rgba(33, 101, 245, 0.04)",
           overflow: "hidden",
-          padding: "24px 22px 20px",
+          padding: "16px 18px 14px",
         }}
       >
         {/* Sky Background Photograph in top-right with soft gradient mask */}
@@ -114,8 +114,8 @@ export default function WeatherHero({
             position: "absolute",
             top: 0,
             right: 0,
-            width: "68%",
-            height: "75%",
+            width: "60%",
+            height: "70%",
             backgroundImage: "url('/image.png')",
             backgroundSize: "cover",
             backgroundPosition: "top right",
@@ -130,8 +130,8 @@ export default function WeatherHero({
             top: 0,
             left: 0,
             right: 0,
-            height: "75%",
-            background: "linear-gradient(90deg, #FFFFFF 42%, rgba(255,255,255,0.85) 60%, rgba(255,255,255,0.15) 100%)",
+            height: "70%",
+            background: "linear-gradient(90deg, #FFFFFF 45%, rgba(255,255,255,0.85) 65%, rgba(255,255,255,0.15) 100%)",
             pointerEvents: "none",
             zIndex: 1,
           }}
@@ -140,53 +140,53 @@ export default function WeatherHero({
         {/* Content Container */}
         <div style={{ position: "relative", zIndex: 2 }}>
           {/* Location row */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 4 }}>
             {/* Small blue location pin */}
             <div
               style={{
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 borderRadius: "50%",
                 background: "#EEF4FE",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
-                marginTop: 2,
+                marginTop: 1,
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#2165F5">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="#2165F5">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 16.5, fontWeight: 700, color: "#101828", letterSpacing: "-0.3px", lineHeight: 1.25 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#101828", letterSpacing: "-0.2px", lineHeight: 1.2 }}>
                 {weather.locationName || "Indore, Madhya Pradesh"}
               </div>
-              <div style={{ fontSize: 12, color: "#8A96AB", fontWeight: 500, marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: "#8A96AB", fontWeight: 500, marginTop: 1 }}>
                 {lat}, {lon}
               </div>
             </div>
           </div>
 
           {/* Updated timestamp + Refresh button */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 14 }}>
-            <span style={{ fontSize: 11.5, color: "#8A96AB", fontWeight: 500 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, marginBottom: 8 }}>
+            <span style={{ fontSize: 11, color: "#8A96AB", fontWeight: 500 }}>
               Updated {timeLabel}
             </span>
-            <span style={{ color: "#CBD5E1", fontSize: 12 }}>•</span>
+            <span style={{ color: "#CBD5E1", fontSize: 11 }}>•</span>
             <button
               onClick={onRefresh}
               disabled={refreshing}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 5,
+                gap: 4,
                 background: "#FFFFFF",
                 border: "1px solid #DCE7F5",
-                borderRadius: 16,
-                padding: "3px 10px",
-                fontSize: 11.5,
+                borderRadius: 14,
+                padding: "2px 8px",
+                fontSize: 11,
                 fontWeight: 600,
                 color: "#101828",
                 cursor: refreshing ? "not-allowed" : "pointer",
@@ -194,8 +194,8 @@ export default function WeatherHero({
               }}
             >
               <svg
-                width="12"
-                height="12"
+                width="11"
+                height="11"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#2165F5"
@@ -211,14 +211,14 @@ export default function WeatherHero({
           </div>
 
           {/* Temperature + Condition row */}
-          <div style={{ display: "flex", alignItems: "baseline", gap: 18, marginTop: 6, marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginTop: 4, marginBottom: 10 }}>
             {/* Very large temperature display */}
             <div style={{ display: "flex", alignItems: "flex-start", lineHeight: 0.9 }}>
               <span
                 style={{
-                  fontSize: 76,
+                  fontSize: 58,
                   fontWeight: 800,
-                  letterSpacing: "-4px",
+                  letterSpacing: "-3px",
                   color: "#101828",
                   lineHeight: 0.95,
                   fontFamily: "Inter, sans-serif",
@@ -228,10 +228,10 @@ export default function WeatherHero({
               </span>
               <span
                 style={{
-                  fontSize: 32,
+                  fontSize: 26,
                   fontWeight: 600,
                   color: "#101828",
-                  marginTop: 4,
+                  marginTop: 2,
                   lineHeight: 1,
                 }}
               >
@@ -239,10 +239,10 @@ export default function WeatherHero({
               </span>
               <span
                 style={{
-                  fontSize: 22,
+                  fontSize: 18,
                   fontWeight: 500,
                   color: "#8A96AB",
-                  marginTop: 24,
+                  marginTop: 18,
                   marginLeft: 1,
                 }}
               >
@@ -251,11 +251,11 @@ export default function WeatherHero({
             </div>
 
             {/* Condition details */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 3, paddingBottom: 6 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#101828", letterSpacing: "-0.2px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingBottom: 4 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#101828", letterSpacing: "-0.2px" }}>
                 {s.conditionDescription || "Condition unavailable"}
               </div>
-              <div style={{ fontSize: 13, color: "#8A96AB", fontWeight: 500 }}>
+              <div style={{ fontSize: 12, color: "#8A96AB", fontWeight: 500 }}>
                 {s.feelsLike !== null ? `Feels like ${Math.round(s.feelsLike)}°C` : "Feels like --°C"}
               </div>
             </div>
@@ -269,14 +269,14 @@ export default function WeatherHero({
                 width: "100%",
                 background: "#FEF7EE",
                 border: "1px solid #FEDF89",
-                borderRadius: 14,
-                padding: "10px 14px",
+                borderRadius: 12,
+                padding: "8px 12px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: 12,
+                gap: 10,
                 cursor: onViewSources ? "pointer" : "default",
-                marginTop: 8,
+                marginTop: 6,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
