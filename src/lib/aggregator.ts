@@ -2,7 +2,7 @@
 // Implements FR-008 through FR-015, NFR-005
 // Score weights: 40% agreement, 30% freshness, 30% availability
 
-import { NormalizedWeatherData, WeatherAggregation, ConditionCode, HourlyForecastItem } from "@/lib/types/weather";
+import { NormalizedWeatherData, WeatherAggregation, ConditionCode, HourlyForecastItem, HourlyForecastMetadata } from "@/lib/types/weather";
 import { fetchOpenMeteo } from "@/lib/providers/open-meteo";
 import { fetchWeatherApi } from "@/lib/providers/weatherapi";
 import { fetchOpenWeather } from "@/lib/providers/openweather";
@@ -241,34 +241,92 @@ export async function aggregateWeather(
     agreementScore * 0.4 + freshnessScore * 0.3 + availabilityScore * 0.3
   );
 
-  // Extract 24-hour future forecast items from openMeteo rawData
+  // Extract 24-hour future forecast items strictly from Open-Meteo NWP rawData
+  // Requirements:
+  // - Never label as ML prediction
+  // - Strict data integrity: no zero-imputation of missing temperature or precipitation
+  // - Filter out nulls, non-finite values, duplicate or out-of-order timestamps
+  // - Keep only upcoming forecast entries
   let hourlyForecast: HourlyForecastItem[] | undefined = undefined;
+  let hourlyForecastMeta: HourlyForecastMetadata | undefined = undefined;
+
   const rawHourly = (openMeteo?.rawData as Record<string, unknown>)?.hourly as {
     time?: string[];
-    temperature_2m?: number[];
-    precipitation?: number[];
-    weather_code?: number[];
+    temperature_2m?: (number | null)[];
+    precipitation?: (number | null)[];
+    weather_code?: (number | null)[];
   } | undefined;
 
   if (rawHourly?.time && Array.isArray(rawHourly.time)) {
     const nowLocalMs = Date.now();
-    const items: HourlyForecastItem[] = [];
     const times = rawHourly.time;
     const temps = rawHourly.temperature_2m || [];
     const precips = rawHourly.precipitation || [];
     const codes = rawHourly.weather_code || [];
 
-    // Find current or upcoming hour index
-    for (let i = 0; i < times.length && items.length < 24; i++) {
-      const timeStr = times[i];
-      const itemDate = new Date(timeStr.includes("Z") ? timeStr : `${timeStr}:00+05:30`);
-      
-      // We take upcoming hours starting from the current hour
-      if (itemDate.getTime() >= nowLocalMs - 45 * 60 * 1000) {
+    // Parse, filter, deduplicate, and sort entries chronologically
+    interface ValidatedEntry {
+      isoTime: string;
+      timestampMs: number;
+      temp: number | null;
+      precip: number | null;
+      code: number | null;
+    }
+
+    const seenTimes = new Set<string>();
+    const validEntries: ValidatedEntry[] = [];
+
+    for (let i = 0; i < times.length; i++) {
+      const rawTime = times[i];
+      if (!rawTime || typeof rawTime !== "string") continue;
+      if (seenTimes.has(rawTime)) continue; // Deduplicate
+      seenTimes.add(rawTime);
+
+      const normalizedIso = rawTime.includes("Z") ? rawTime : `${rawTime}:00+05:30`;
+      const d = new Date(normalizedIso);
+      const timestampMs = d.getTime();
+      if (isNaN(timestampMs)) continue; // Reject invalid dates
+
+      // Strictly upcoming: keep from current hour (-45 mins buffer) forward
+      if (timestampMs < nowLocalMs - 45 * 60 * 1000) continue;
+
+      const rawTemp = temps[i];
+      const validTemp = rawTemp !== null && rawTemp !== undefined && Number.isFinite(rawTemp)
+        ? Math.round(rawTemp * 10) / 10
+        : null;
+
+      const rawPrecip = precips[i];
+      const validPrecip = rawPrecip !== null && rawPrecip !== undefined && Number.isFinite(rawPrecip) && rawPrecip >= 0
+        ? Math.round(rawPrecip * 10) / 10
+        : null;
+
+      const rawCode = codes[i];
+      const validCode = rawCode !== null && rawCode !== undefined && Number.isFinite(rawCode)
+        ? Math.round(rawCode)
+        : null;
+
+      validEntries.push({
+        isoTime: rawTime,
+        timestampMs,
+        temp: validTemp,
+        precip: validPrecip,
+        code: validCode,
+      });
+    }
+
+    // Sort chronologically to prevent out-of-order sequence
+    validEntries.sort((a, b) => a.timestampMs - b.timestampMs);
+
+    // Limit to next 24 consecutive hours
+    const slice24 = validEntries.slice(0, 24);
+
+    if (slice24.length > 0) {
+      hourlyForecast = slice24.map((entry, idx) => {
+        const itemDate = new Date(entry.timestampMs);
         const hourNum = itemDate.getHours();
         const isNight = hourNum < 6 || hourNum >= 18;
-        const codeNum = codes[i] ?? 0;
-        
+        const codeNum = entry.code ?? 0;
+
         let icon = "☀️";
         if (codeNum >= 51 && codeNum <= 82) icon = "🌧️";
         else if (codeNum >= 95) icon = "⛈️";
@@ -278,7 +336,7 @@ export async function aggregateWeather(
         else icon = isNight ? "🌙" : "☀️";
 
         let hourLabel = "";
-        if (items.length === 0) {
+        if (idx === 0) {
           hourLabel = "Now";
         } else {
           const h12 = hourNum % 12 || 12;
@@ -286,19 +344,28 @@ export async function aggregateWeather(
           hourLabel = `${h12}:00 ${ampm}`;
         }
 
-        items.push({
-          time: timeStr,
+        return {
+          time: entry.isoTime,
           hourLabel,
-          temperature: Math.round(temps[i] ?? 0),
-          precipitation: precips[i] ?? 0,
+          temperature: entry.temp,
+          precipitation: entry.precip,
           conditionCode: codeNum >= 51 ? "rainy" : codeNum > 0 ? "partly-cloudy" : "clear",
           weatherIcon: icon,
           isNight,
-        });
-      }
-    }
-    if (items.length > 0) {
-      hourlyForecast = items;
+          source: "open-meteo-nwp",
+        };
+      });
+
+      hourlyForecastMeta = {
+        sourceName: "Open-Meteo Numerical Weather Prediction (NWP Ensemble)",
+        sourceProvider: "open-meteo",
+        lastUpdatedAt: openMeteo?.fetchedAt || generatedAt,
+        coverageHours: hourlyForecast.length,
+        forecastValidFrom: hourlyForecast[0].time,
+        forecastValidTo: hourlyForecast[hourlyForecast.length - 1].time,
+        disclaimer:
+          "24-Hour hourly forecast is generated by Open-Meteo physical Numerical Weather Prediction (NWP) models. WeatherPulse trained XGBoost ML predictions operate exclusively for the immediate next-hour horizon below.",
+      };
     }
   }
 
@@ -318,5 +385,6 @@ export async function aggregateWeather(
     stale: false,
     mlPrediction,
     hourlyForecast,
+    hourlyForecastMeta,
   };
 }

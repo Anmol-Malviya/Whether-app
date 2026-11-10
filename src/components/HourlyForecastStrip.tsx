@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { HourlyForecastItem } from "@/lib/types/weather";
+import { HourlyForecastItem, HourlyForecastMetadata } from "@/lib/types/weather";
 
 interface HourlyForecastStripProps {
   items: HourlyForecastItem[] | undefined;
+  metadata?: HourlyForecastMetadata;
 }
 
 /**
@@ -25,29 +26,20 @@ function CuteCrescentMoon() {
           <stop offset="100%" stopColor="#FDE047" />
         </linearGradient>
       </defs>
-
-      {/* Main Cute Crescent Moon */}
       <path
         d="M26.5 7.5C21.8 8.8 18.5 13.1 18.5 18.2C18.5 24 23.2 28.7 29 28.7C30.6 28.7 32.1 28.3 33.5 27.6C31.5 32 27 35 21.8 35C14.7 35 9 29.3 9 22.2C9 15.6 14 10.2 20.4 9.5C22.4 9.3 24.5 8.6 26.5 7.5Z"
         fill="url(#cuteMoonGrad)"
       />
-
-      {/* Cute Inner Moon Highlights / Cheek blush */}
       <ellipse cx="16.5" cy="22" rx="2" ry="1.2" fill="#F472B6" opacity="0.6" />
-
-      {/* Sparkling 4-point Stars */}
-      {/* Top right star */}
       <path
         d="M32 10C32 10 32.8 11.8 34 12C32.8 12.2 32 14 32 14C32 14 31.2 12.2 30 12C31.2 11.8 32 10 32 10Z"
         fill="url(#cuteStarGrad)"
       />
-      {/* Bottom right tiny star */}
       <path
         d="M31 22C31 22 31.5 23 32.5 23.2C31.5 23.4 31 24.5 31 24.5C31 24.5 30.5 23.4 29.5 23.2C30.5 23 31 22 31 22Z"
         fill="#FFFFFF"
         opacity="0.9"
       />
-      {/* Tiny twinkle top left */}
       <circle cx="13" cy="11" r="1" fill="#FFFFFF" opacity="0.8" />
     </svg>
   );
@@ -67,8 +59,6 @@ function CuteBrightSun() {
           <stop offset="100%" stopColor="#F59E0B" />
         </linearGradient>
       </defs>
-
-      {/* Cute Rounded Petal Rays */}
       <g>
         {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
           <rect
@@ -83,15 +73,9 @@ function CuteBrightSun() {
           />
         ))}
       </g>
-
-      {/* Main Cute Sun Body */}
       <circle cx="20" cy="20" r="10" fill="url(#cuteSunGrad)" />
-
-      {/* Cute Cheeks */}
       <ellipse cx="16" cy="22" rx="1.5" ry="1" fill="#FB7185" opacity="0.65" />
       <ellipse cx="24" cy="22" rx="1.5" ry="1" fill="#FB7185" opacity="0.65" />
-
-      {/* Center Shine */}
       <circle cx="17.5" cy="16.5" r="1.8" fill="#FFFFFF" opacity="0.6" />
     </svg>
   );
@@ -106,12 +90,10 @@ function CuteRainCloud() {
           <stop offset="100%" stopColor="#94A3B8" />
         </linearGradient>
       </defs>
-      {/* Cloud body */}
       <path
         d="M12 24C9.8 24 8 22.2 8 20C8 18 9.5 16.3 11.5 16.1C12.3 12.6 15.4 10 19 10C23.2 10 26.7 13.2 27 17.3C28.7 17.8 30 19.3 30 21.2C30 23.3 28.3 25 26.2 25L12 24Z"
         fill="url(#cloudGrad)"
       />
-      {/* Raindrops */}
       <line x1="14" y1="27" x2="12" y2="32" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" />
       <line x1="20" y1="28" x2="18" y2="33" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" />
       <line x1="26" y1="27" x2="24" y2="32" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" />
@@ -136,7 +118,7 @@ function CutePartlyCloudy({ isNight }: { isNight: boolean }) {
 }
 
 function renderCuteWeatherIcon(item: HourlyForecastItem) {
-  if (item.precipitation > 0 || item.conditionCode === "rainy") {
+  if ((item.precipitation !== null && item.precipitation > 0) || item.conditionCode === "rainy") {
     return <CuteRainCloud />;
   }
   if (item.conditionCode === "partly-cloudy" || item.conditionCode === "cloudy") {
@@ -145,7 +127,7 @@ function renderCuteWeatherIcon(item: HourlyForecastItem) {
   return item.isNight ? <CuteCrescentMoon /> : <CuteBrightSun />;
 }
 
-export default function HourlyForecastStrip({ items }: HourlyForecastStripProps) {
+export default function HourlyForecastStrip({ items, metadata }: HourlyForecastStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeItem, setActiveItem] = useState<number>(0);
 
@@ -154,9 +136,9 @@ export default function HourlyForecastStrip({ items }: HourlyForecastStripProps)
   return (
     <div
       style={{
-        background: "#0D1424", // Deep rich midnight blue matching user's image exactly
+        background: "#0D1424",
         borderRadius: 22,
-        padding: "18px 20px 20px",
+        padding: "18px 20px 18px",
         color: "#FFFFFF",
         boxShadow: "0 12px 36px rgba(13, 20, 36, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15)",
         border: "1px solid rgba(255, 255, 255, 0.08)",
@@ -178,42 +160,56 @@ export default function HourlyForecastStrip({ items }: HourlyForecastStripProps)
         }}
       />
 
-      {/* Header */}
+      {/* Header with Explicit Source Provenance */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 10,
           marginBottom: 16,
           position: "relative",
           zIndex: 2,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.2px", color: "#F8FAFC" }}>
-            Hourly Forecast & Trend
+            24-Hour Forecast Trend
           </span>
+
+          {/* Explicit NWP Source Provenance Badge */}
           <span
             style={{
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: 700,
-              padding: "3px 10px",
+              padding: "2px 8px",
               borderRadius: 20,
-              background: "rgba(33, 101, 245, 0.22)",
-              color: "#60A5FA",
-              border: "1px solid rgba(96, 165, 250, 0.3)",
+              background: "rgba(14, 165, 233, 0.18)",
+              color: "#38BDF8",
+              border: "1px solid rgba(56, 189, 248, 0.35)",
               display: "inline-flex",
               alignItems: "center",
-              gap: 4,
+              gap: 5,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
             }}
           >
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#60A5FA" }} />
-            Next 24 Hours
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#38BDF8" }} />
+            Open-Meteo NWP Forecast
           </span>
         </div>
-        <span style={{ fontSize: 11.5, color: "#64748B", fontWeight: 500 }}>
-          Scroll horizontally →
-        </span>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {metadata?.lastUpdatedAt && (
+            <span style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>
+              Updated {new Date(metadata.lastUpdatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })}
+            </span>
+          )}
+          <span style={{ fontSize: 11.5, color: "#94A3B8", fontWeight: 500 }}>
+            Scroll horizontally →
+          </span>
+        </div>
       </div>
 
       {/* Horizontal Carousel Container */}
@@ -275,7 +271,7 @@ export default function HourlyForecastStrip({ items }: HourlyForecastStripProps)
                 }
               }}
             >
-              {/* Time Label (Now, 11:00 pm, 12:00 am, etc.) */}
+              {/* Time Label */}
               <span
                 style={{
                   fontSize: 11.5,
@@ -304,7 +300,7 @@ export default function HourlyForecastStrip({ items }: HourlyForecastStripProps)
                 {renderCuteWeatherIcon(item)}
               </div>
 
-              {/* Temperature */}
+              {/* Temperature (Strict: shows N/A if null, never 0°C fallback) */}
               <span
                 style={{
                   fontSize: 19,
@@ -314,11 +310,11 @@ export default function HourlyForecastStrip({ items }: HourlyForecastStripProps)
                   lineHeight: 1,
                 }}
               >
-                {item.temperature}°
+                {item.temperature !== null ? `${item.temperature}°` : "N/A"}
               </span>
 
               {/* Rain indicator if precipitation */}
-              {item.precipitation > 0 ? (
+              {item.precipitation !== null && item.precipitation > 0 ? (
                 <span
                   style={{
                     fontSize: 9.5,
@@ -336,6 +332,31 @@ export default function HourlyForecastStrip({ items }: HourlyForecastStripProps)
             </div>
           );
         })}
+      </div>
+
+      {/* Footer Transparency Disclaimer */}
+      <div
+        style={{
+          marginTop: 12,
+          paddingTop: 8,
+          borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+          fontSize: 11,
+          color: "#64748B",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 6,
+        }}
+      >
+        <span>
+          Data Source: <strong style={{ color: "#94A3B8" }}>Open-Meteo Physical NWP Simulation</strong> (Not ML derived)
+        </span>
+        {metadata?.forecastValidFrom && metadata?.forecastValidTo && (
+          <span>
+            Horizon: {metadata.forecastValidFrom.slice(11, 16)} to {metadata.forecastValidTo.slice(11, 16)} IST (24h)
+          </span>
+        )}
       </div>
     </div>
   );

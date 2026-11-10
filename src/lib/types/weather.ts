@@ -27,11 +27,23 @@ export interface NormalizedWeatherData {
 export interface HourlyForecastItem {
   time: string; // ISO string e.g. "2026-11-10T23:00"
   hourLabel: string; // e.g. "Now", "11:00 pm", "12:00 am"
-  temperature: number; // °C
-  precipitation: number; // mm
+  temperature: number | null; // °C (never zero-imputed if missing)
+  precipitation: number | null; // mm (never zero-imputed if missing)
   conditionCode: string;
   weatherIcon: string;
   isNight: boolean;
+  source: "open-meteo-nwp" | "weatherpulse-ml";
+  horizonHours?: number; // e.g. 1 for lead-1h, 3, 6, 12, 24 for future extensible multi-horizon models
+}
+
+export interface HourlyForecastMetadata {
+  sourceName: string; // "Open-Meteo NWP Forecast (Deterministic Ensemble)"
+  sourceProvider: "open-meteo";
+  lastUpdatedAt: string; // ISO string
+  coverageHours: number; // 24
+  forecastValidFrom: string; // ISO string
+  forecastValidTo: string; // ISO string
+  disclaimer: string;
 }
 
 export interface WeatherAggregation {
@@ -64,6 +76,7 @@ export interface WeatherAggregation {
   stale: boolean;
   mlPrediction?: MlPredictionPayload;
   hourlyForecast?: HourlyForecastItem[];
+  hourlyForecastMeta?: HourlyForecastMetadata;
 }
 
 export interface MlPredictionPayload {

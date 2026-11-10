@@ -603,7 +603,10 @@ export default function WeatherHero({
       </div>
 
       {/* ── Hourly Forecast Strip (Now, 11:00 pm, 12:00 am...) ── */}
-      <HourlyForecastStrip items={weather.hourlyForecast} />
+      <HourlyForecastStrip
+        items={weather.hourlyForecast}
+        metadata={weather.hourlyForecastMeta}
+      />
 
       {/* ── E. Confidence Score Card ── */}
       <div
@@ -766,7 +769,7 @@ export default function WeatherHero({
               padding: "16px 20px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span
                   style={{
@@ -775,15 +778,27 @@ export default function WeatherHero({
                     fontSize: 10,
                     fontWeight: 700,
                     letterSpacing: "0.05em",
-                    padding: "2px 8px",
+                    padding: "3px 9px",
                     borderRadius: 9999,
                     textTransform: "uppercase",
                   }}
                 >
-                  Shadow Mode
+                  WeatherPulse ML Model
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
-                  WeatherPulse ML Model (Next-Hour Nowcast)
+                  XGBoost 1-Hour Horizon Nowcast
+                </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: "#64748B",
+                    background: "#E2E8F0",
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                  }}
+                >
+                  Shadow Mode
                 </span>
               </div>
               <span style={{ fontSize: 11, color: "#64748B" }}>
@@ -804,60 +819,77 @@ export default function WeatherHero({
             </div>
 
             {weather.mlPrediction.status === "available" ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginTop: 10 }}>
-                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
-                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Predicted Temp (t+1h)</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginTop: 10 }}>
+                <div style={{ background: "#FFFFFF", padding: "12px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>ML Predicted Temp (t+1h)</div>
+                  <div style={{ fontSize: 19, fontWeight: 800, color: "#0F172A", marginTop: 2 }}>
                     {weather.mlPrediction.predictedTemperature !== null
                       ? `${weather.mlPrediction.predictedTemperature.toFixed(1)}°C`
                       : "N/A"}
                   </div>
+                  <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 2 }}>
+                    Lead horizon: 1 Hour
+                  </div>
                 </div>
 
-                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <div style={{ background: "#FFFFFF", padding: "12px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
                   <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Rain Occurrence Score</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0F172A" }}>
+                  <div style={{ fontSize: 19, fontWeight: 800, color: "#0F172A", marginTop: 2 }}>
                     {weather.mlPrediction.rainProbability !== null
                       ? `${(weather.mlPrediction.rainProbability * 100).toFixed(1)}%`
                       : "N/A"}
                   </div>
-                  <div style={{ fontSize: 10, color: "#64748B" }}>
-                    Threshold: {(weather.mlPrediction.rainThreshold * 100).toFixed(1)}%
+                  <div style={{ fontSize: 10, color: "#64748B", marginTop: 2 }}>
+                    Decision threshold: {(weather.mlPrediction.rainThreshold * 100).toFixed(1)}%
                   </div>
                 </div>
 
-                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <div style={{ background: "#FFFFFF", padding: "12px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
                   <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Rain Classification</div>
                   <div
                     style={{
                       fontSize: 16,
                       fontWeight: 800,
+                      marginTop: 2,
                       color: weather.mlPrediction.rainPredicted ? "#2563EB" : "#16A34A",
                     }}
                   >
                     {weather.mlPrediction.rainPredicted ? "Rain Likely" : "No Rain"}
                   </div>
-                  <div style={{ fontSize: 10, color: "#64748B" }}>
-                    Target: {weather.mlPrediction.targetLeadTimeUtc?.slice(11, 16) || "N/A"} UTC
+                  <div style={{ fontSize: 10, color: "#64748B", marginTop: 2 }}>
+                    Target: {(() => {
+                      if (!weather.mlPrediction.targetLeadTimeUtc) return "N/A";
+                      try {
+                        return new Date(weather.mlPrediction.targetLeadTimeUtc).toLocaleTimeString("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        });
+                      } catch {
+                        return weather.mlPrediction.targetLeadTimeUtc.slice(11, 16);
+                      }
+                    })()}
                   </div>
                 </div>
 
-                <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
-                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Model Version</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
+                <div style={{ background: "#FFFFFF", padding: "12px 14px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, color: "#64748B", fontWeight: 500 }}>Model Provenance</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#334155", marginTop: 2 }}>
                     {weather.mlPrediction.modelMetadata?.temperatureModelType || "XGBoost"} (32 feats)
                   </div>
-                  <div style={{ fontSize: 10, color: "#64748B" }}>Source: Open-Meteo Hourly</div>
+                  <div style={{ fontSize: 10, color: "#64748B", marginTop: 2 }}>
+                    Version: obs_only v1
+                  </div>
                 </div>
               </div>
             ) : (
               <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>
-                ML nowcast currently unavailable ({weather.mlPrediction.status}). Real-time multi-provider consensus forecast remains fully operational above.
+                ML nowcast currently unavailable ({weather.mlPrediction.status}). The 24-hour Open-Meteo physical NWP forecast strip remains active above.
               </div>
             )}
 
-            <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 10, fontStyle: "italic" }}>
-              {weather.mlPrediction.disclaimer}
+            <div style={{ fontSize: 11, color: "#64748B", marginTop: 12, borderTop: "1px solid #E2E8F0", paddingTop: 8 }}>
+              <strong>Source Transparency:</strong> The 24-hour forecast strip above is simulated by Open-Meteo Physical NWP. This card displays our experimental, independent next-hour ML model running in shadow evaluation.
             </div>
           </div>
         )}
