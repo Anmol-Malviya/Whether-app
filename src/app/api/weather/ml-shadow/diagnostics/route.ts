@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       successCount,
       failedCount,
       latencyAgg,
-      failureDistAgg,
+      ,
       recentFailures,
       lastSuccess,
       lastFailure,

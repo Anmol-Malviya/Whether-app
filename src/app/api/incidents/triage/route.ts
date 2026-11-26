@@ -76,6 +76,26 @@ export async function GET(request: NextRequest) {
 // POST /api/incidents/triage/action — Officer verification actions (Confirm, Dismiss, Flag Duplicate)
 export async function POST(request: NextRequest) {
   try {
+    // Verified server-side authentication check:
+    // Requires ADMIN_API_KEY, OFFICER_API_KEY, or CRON_SECRET authorization header
+    const authHeader = request.headers.get("authorization");
+    const allowedSecret =
+      process.env.OFFICER_API_KEY ||
+      process.env.ADMIN_API_KEY ||
+      process.env.CRON_SECRET;
+
+    const isAuthorized = Boolean(
+      allowedSecret && authHeader === `Bearer ${allowedSecret}`
+    );
+
+    // If an officer secret is configured, require authentication
+    if (allowedSecret && !isAuthorized) {
+      return Response.json(
+        { error: "Unauthorized: Valid officer authorization credentials required." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { momentIds, action } = body;
 

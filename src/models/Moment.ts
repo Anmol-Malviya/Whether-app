@@ -88,6 +88,7 @@ const MomentSchema: Schema = new Schema(
 );
 
 // Indexes specified in SRS Section 6.2 + spatial and verification indexes
+MomentSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // Native MongoDB TTL index
 MomentSchema.index({ expiresAt: 1, createdAt: -1 });
 MomentSchema.index({ approximateLocation: 1, createdAt: -1 });
 MomentSchema.index({ moderationStatus: 1, createdAt: -1 });

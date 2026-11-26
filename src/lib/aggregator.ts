@@ -143,11 +143,27 @@ function computeConsensus(providers: NormalizedWeatherData[]): WeatherAggregatio
     return valid.length > 0 ? (valid.reduce((a, b) => a + b, 0) / valid.length) as T : null;
   };
 
+  // Circular mean for angular values on [0, 360) degrees
+  const circularAvg = (angles: (number | null)[]): number | null => {
+    const valid = angles.filter((a): a is number => a !== null && !isNaN(a));
+    if (valid.length === 0) return null;
+    let sinSum = 0;
+    let cosSum = 0;
+    for (const deg of valid) {
+      const rad = (deg * Math.PI) / 180;
+      sinSum += Math.sin(rad);
+      cosSum += Math.cos(rad);
+    }
+    let meanRad = Math.atan2(sinSum / valid.length, cosSum / valid.length);
+    if (meanRad < 0) meanRad += 2 * Math.PI;
+    return (meanRad * 180) / Math.PI;
+  };
+
   const temperature = avg(ok.map((p) => p.temperature));
   const feelsLike = avg(ok.map((p) => p.feelsLike));
   const humidity = avg(ok.map((p) => p.humidity));
   const windSpeed = avg(ok.map((p) => p.windSpeed));
-  const windDirection = avg(ok.map((p) => p.windDirection));
+  const windDirection = circularAvg(ok.map((p) => p.windDirection));
   const precipitation = avg(ok.map((p) => p.precipitation));
 
   // Pick modal condition

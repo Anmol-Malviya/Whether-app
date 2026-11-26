@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --test scripts/test_circular_wind.mjs scripts/test_shadow_fixes.mjs scripts/test_shadow_metrics.mjs scripts/test_shadow_integration.mjs scripts/test_final_reliability.mjs",
     "lint": "eslint"
   },
   "dependencies": {

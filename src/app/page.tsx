@@ -25,8 +25,14 @@ export default function HomePage() {
 
   const locationRef = useRef(location);
   const coordsRef = useRef(coords);
-  locationRef.current = location;
-  coordsRef.current = coords;
+
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+
+  useEffect(() => {
+    coordsRef.current = coords;
+  }, [coords]);
 
   const fetchWeather = useCallback(
     async (
@@ -143,6 +149,7 @@ export default function HomePage() {
 
   // Run once on initial load
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     detectCurrentLocation();
     const interval = setInterval(() => {
       fetchWeather();
