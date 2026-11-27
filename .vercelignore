@@ -1,0 +1,9 @@
+# Exclude heavy ml-service datasets and caches from root Next.js build
+ml-service/data/
+ml-service/training/
+ml-service/tests/
+ml-service/.venv/
+.git
+.github
+WeatherPulse_Project_Overview.pdf
+generate_pdf.py

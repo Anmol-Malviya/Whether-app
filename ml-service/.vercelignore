@@ -1,0 +1,9 @@
+# Exclude large training data, archives, reports, and offline tests from Vercel Serverless Function bundle
+data/
+training/
+tests/
+.venv/
+__pycache__/
+*.pyc
+*.csv
+*.parquet
