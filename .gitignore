@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# ML training data and virtual environment
+ml-service/data/
+ml-service/.venv/
+ml-service/**/__pycache__/
+*.pyc
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
