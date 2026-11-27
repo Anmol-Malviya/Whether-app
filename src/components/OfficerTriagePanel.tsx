@@ -61,7 +61,7 @@ export default function OfficerTriagePanel({ location, coords }: OfficerTriagePa
     );
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `WeatherPulse_Incident_Dossier_${Date.now()}.json`);
+    downloadAnchor.setAttribute("download", `VayuDrishti_Incident_Dossier_${Date.now()}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -321,7 +321,7 @@ export default function OfficerTriagePanel({ location, coords }: OfficerTriagePa
           <button
             onClick={() => setBroadcastAlert({
               active: true,
-              message: `WeatherPulse Flash Alert: Severe waterlogging & localized inundation confirmed across ${location.toUpperCase()}. Caution advised on arterial routes.`,
+              message: `VayuDrishti Flash Alert: Severe waterlogging & localized inundation confirmed across ${location.toUpperCase()}. Caution advised on arterial routes.`,
             })}
             style={{
               flex: 1,

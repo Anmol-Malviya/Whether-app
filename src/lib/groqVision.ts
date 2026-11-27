@@ -36,7 +36,7 @@ export async function analyzeWeatherMomentWithGroq(
     return null;
   }
 
-  const prompt = `You are an expert meteorological and disaster management AI for WeatherPulse India.
+  const prompt = `You are an expert meteorological and disaster management AI for VayuDrishti India.
 Analyze this crowdsourced weather photo submitted by a citizen from "${userLocation}" with caption "${userCaption}".
 
 Evaluate:

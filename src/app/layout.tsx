@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WeatherPulse — Multi-Source Weather Intelligence",
+  title: "VayuDrishti — Multi-Source Weather Intelligence",
   description:
-    "WeatherPulse aggregates live weather data from multiple providers, evaluates agreement and freshness, and gives you an honest confidence score for Indore and beyond.",
-  keywords: "weather, Indore, weather app, multi-source, weather confidence, WeatherPulse",
-  authors: [{ name: "WeatherPulse" }],
+    "VayuDrishti aggregates live weather data from multiple providers, evaluates agreement and freshness, and gives you an honest confidence score for Indore and beyond.",
+  keywords: "weather, Indore, weather app, multi-source, weather confidence, VayuDrishti",
+  authors: [{ name: "VayuDrishti" }],
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     ]
   },
   openGraph: {
-    title: "WeatherPulse",
+    title: "VayuDrishti",
     description: "Honest, multi-source weather intelligence for Indore",
     type: "website",
   },

@@ -1,7 +1,7 @@
 import React from "react";
 import { NavTabId } from "./nav-config";
 
-export function WeatherPulseLogo({ onClick }: { onClick: () => void }) {
+export function VayuDrishtiLogo({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -16,7 +16,7 @@ export function WeatherPulseLogo({ onClick }: { onClick: () => void }) {
         fontFamily: "inherit",
         textAlign: "left",
       }}
-      aria-label="WeatherPulse home"
+      aria-label="VayuDrishti home"
     >
       {/* Sun icon */}
       <div
@@ -43,12 +43,15 @@ export function WeatherPulseLogo({ onClick }: { onClick: () => void }) {
       </div>
 
       <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.4px", display: "flex", alignItems: "center" }}>
-        <span style={{ color: "#111828" }}>Weather</span>
-        <span style={{ color: "#2165F5" }}>Pulse</span>
+        <span style={{ color: "#111828" }}>Vayu</span>
+        <span style={{ color: "#2165F5" }}>Drishti</span>
       </div>
     </button>
   );
 }
+
+// Backwards compatibility alias
+export const WeatherPulseLogo = VayuDrishtiLogo;
 
 export function NavTabIcon({ tabId, isActive }: { tabId: NavTabId; isActive: boolean }) {
   switch (tabId) {

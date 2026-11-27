@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.count - a.count);
 
     return NextResponse.json({
-      service: "WeatherPulse ML Diagnostics",
+      service: "VayuDrishti ML Diagnostics",
       range: rangeParam,
       inferenceHealth: {
         totalRequests: totalCount,

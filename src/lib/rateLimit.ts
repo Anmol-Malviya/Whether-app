@@ -1,5 +1,5 @@
 /**
- * Rate Limiting Service Abstraction for WeatherPulse
+ * Rate Limiting Service Abstraction for VayuDrishti
  *
  * Current Architecture & Limitations:
  * 1. Default: In-memory Map sliding window.

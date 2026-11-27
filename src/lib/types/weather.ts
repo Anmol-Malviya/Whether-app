@@ -1,4 +1,4 @@
-// Core weather types for WeatherPulse
+// Core weather types for VayuDrishti
 // Shared across provider adapters, scoring service, and API responses
 
 export interface NormalizedWeatherData {
@@ -32,7 +32,7 @@ export interface HourlyForecastItem {
   conditionCode: string;
   weatherIcon: string;
   isNight: boolean;
-  source: "open-meteo-nwp" | "weatherpulse-ml";
+  source: "open-meteo-nwp" | "vayudrishti-ml";
   horizonHours?: number; // e.g. 1 for lead-1h, 3, 6, 12, 24 for future extensible multi-horizon models
 }
 

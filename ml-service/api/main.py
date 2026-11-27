@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     Loads ML model artifacts once during startup.
     Handles startup failures gracefully and provides clean shutdown.
     """
-    logger.info("Initializing WeatherPulse ML Prediction Service...")
+    logger.info("Initializing VayuDrishti ML Prediction Service...")
     try:
         predictor.load_models()
         logger.info("ML Models successfully loaded into memory.")
@@ -42,12 +42,12 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    logger.info("Shutting down WeatherPulse ML Prediction Service...")
+    logger.info("Shutting down VayuDrishti ML Prediction Service...")
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="FastAPI ML Prediction Service for WeatherPulse (Observation-Only Models)",
+    description="FastAPI ML Prediction Service for VayuDrishti (Observation-Only Models)",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -125,7 +125,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 async def root():
     """Friendly welcome endpoint directing clients to documentation and health check."""
     return {
-        "service": "WeatherPulse ML Prediction Service",
+        "service": "VayuDrishti ML Prediction Service",
         "status": "operational",
         "docs_url": "/docs",
         "health_url": "/health",

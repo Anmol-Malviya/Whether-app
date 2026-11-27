@@ -783,7 +783,7 @@ export default function WeatherHero({
                     textTransform: "uppercase",
                   }}
                 >
-                  WeatherPulse ML Model
+                  VayuDrishti ML Model
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
                   XGBoost 1-Hour Horizon Nowcast

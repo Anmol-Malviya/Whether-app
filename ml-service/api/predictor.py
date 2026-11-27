@@ -13,7 +13,7 @@ logger = logging.getLogger("ml_service.predictor")
 
 class ModelPredictor:
     """
-    Manages loading and inference for the WeatherPulse observation-only ML models:
+    Manages loading and inference for the VayuDrishti observation-only ML models:
     - Temperature regression model (lead 1h)
     - Rain occurrence classification model (lead 1h)
     """

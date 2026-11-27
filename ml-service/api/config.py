@@ -4,7 +4,7 @@ from pydantic import Field
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "WeatherPulse ML Prediction Service"
+    PROJECT_NAME: str = "VayuDrishti ML Prediction Service"
     API_V1_STR: str = "/api/v1"
     
     # Paths to model artifacts

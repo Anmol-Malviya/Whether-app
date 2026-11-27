@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      service: "WeatherPulse Shadow Mode ML Evaluator",
+      service: "VayuDrishti Shadow Mode ML Evaluator",
       status: "ok",
       metrics,
       history,

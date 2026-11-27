@@ -1,6 +1,6 @@
 {
-  "name": "WeatherPulse",
-  "short_name": "WeatherPulse",
+  "name": "VayuDrishti",
+  "short_name": "VayuDrishti",
   "description": "Multi-source weather intelligence for Indore",
   "start_url": "/",
   "display": "standalone",
