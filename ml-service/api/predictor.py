@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional
 import xgboost as xgb
-import pandas as pd
+import numpy as np
 from api.config import settings
 from api.schemas import PredictionRequest, PredictionResponse
 from api.feature_builder import build_features_from_observations
@@ -15,7 +15,7 @@ logger = logging.getLogger("ml_service.predictor")
 class ModelPredictor:
     """
     Manages loading and inference for the VayuDrishti observation-only ML models
-    using native XGBoost Booster (lightweight, zero scikit-learn/scipy runtime bloat).
+    using pure native XGBoost Booster & NumPy (zero scikit-learn, scipy, or pandas bloat).
     """
 
     def __init__(self):
@@ -66,10 +66,7 @@ class ModelPredictor:
         return candidates[0]
 
     def load_models(self) -> None:
-        """
-        Loads native XGBoost booster models and JSON metadata.
-        Falls back to .joblib if JSON booster not found (for local backwards compatibility).
-        """
+        """Loads native XGBoost booster models and JSON metadata."""
         temp_json = self._resolve_path("temperature_booster.json")
         rain_json = self._resolve_path("rain_booster.json")
         temp_meta_path = self._resolve_path("temperature_meta.json")
@@ -100,23 +97,7 @@ class ModelPredictor:
             self.is_loaded = True
             return
 
-        # Fallback to joblib if available
-        try:
-            import joblib
-            temp_path = self._resolve_path("temperature_model_obs_only.joblib")
-            rain_path = self._resolve_path("rain_model_obs_only.joblib")
-            logger.info(f"Fallback loading from joblib artifacts: {temp_path}")
-            self.temp_artifact = joblib.load(temp_path)
-            self.rain_artifact = joblib.load(rain_path)
-            self.temp_booster = self.temp_artifact["model"].get_booster()
-            self.rain_booster = self.rain_artifact["model"].get_booster()
-            self.temp_best_iteration = getattr(self.temp_artifact["model"], "best_iteration", None)
-            self.rain_best_iteration = getattr(self.rain_artifact["model"], "best_iteration", None)
-            self.features = self.temp_artifact.get("features", [])
-            self.rain_threshold = float(self.rain_artifact.get("selected_threshold", 0.5))
-            self.is_loaded = True
-        except Exception as e:
-            raise FileNotFoundError(f"Failed to load ML models (native booster or joblib): {e}")
+        raise FileNotFoundError(f"Native model boosters not found at {temp_json} or {rain_json}")
 
     def get_info(self) -> Dict[str, Any]:
         """Returns model info, target horizons, feature count, and selected rain threshold."""
@@ -149,23 +130,22 @@ class ModelPredictor:
 
     def predict(self, request: PredictionRequest) -> PredictionResponse:
         """
-        Executes prediction pipeline using native XGBoost Booster:
-        1. Verifies models are loaded
-        2. Builds 32 model features from 3 hourly observations
-        3. Predicts next-hour temperature
-        4. Predicts rain occurrence probability and evaluates against validation threshold
+        Executes prediction pipeline using pure native XGBoost Booster & NumPy:
+        1. Builds 32 model features from 3 hourly observations as numpy array
+        2. Wraps in DMatrix with feature_names
+        3. Predicts next-hour temperature and rain occurrence
         """
         if not self.is_loaded or self.temp_booster is None or self.rain_booster is None:
             raise RuntimeError("ML models are not loaded or currently unavailable.")
 
-        # Build exactly the 32 model features in the saved order
+        # Build exactly the 32 model features in the saved order as (1, 32) numpy float32 array
         X = build_features_from_observations(
             observations=request.observations,
             expected_feature_order=self.features,
             timezone_str=settings.LOCAL_TIMEZONE
         )
 
-        dmatrix = xgb.DMatrix(X, enable_categorical=True)
+        dmatrix = xgb.DMatrix(X, feature_names=self.features)
 
         # Temperature prediction (Celsius)
         temp_iter = (0, self.temp_best_iteration + 1) if self.temp_best_iteration is not None else (0, 0)
@@ -177,7 +157,6 @@ class ModelPredictor:
         rain_class = bool(rain_prob >= self.rain_threshold)
 
         # Timestamps
-        # latest observation is index 2 (t0)
         t0 = request.observations[2].timestamp_utc
         target_lead_time_utc = t0 + timedelta(hours=1)
         prediction_timestamp_utc = datetime.now(timezone.utc)

@@ -1,5 +1,4 @@
-# Lean Serving dependencies for FastAPI ML Prediction Service on Vercel Serverless
-pandas>=2.0.0
+# Minimal Ultra-Lightweight Serving dependencies for FastAPI ML Prediction Service on Vercel
 numpy>=1.24.0
 xgboost>=2.0.0
 fastapi>=0.110.0

@@ -2,7 +2,6 @@ from typing import List, Dict, Any
 from datetime import datetime
 import zoneinfo
 import numpy as np
-import pandas as pd
 from api.schemas import HourlyObservation
 from api.config import settings
 
@@ -59,16 +58,10 @@ def build_features_from_observations(
     observations: List[HourlyObservation],
     expected_feature_order: List[str] = EXPECTED_FEATURES,
     timezone_str: str = settings.LOCAL_TIMEZONE
-) -> pd.DataFrame:
+) -> np.ndarray:
     """
     Transforms exactly 3 sequential hourly observations [t-2, t-1, t0] into
-    a single-row DataFrame containing the exact 32 features required by the ML models.
-
-    Strictly preserves:
-    - Calendar features (hour, day of week, month, day of year, sin/cos cyclics) based on local time
-    - Observation lag features: t0 (index 2), lag1h (index 1), lag2h (index 0)
-    - Feature order identical to expected_feature_order
-    - Zero NWP features
+    a 2D numpy array (1, 32) in exact expected_feature_order without pandas dependency.
     """
     if len(observations) != 3:
         raise ValueError(f"Expected exactly 3 hourly observations, got {len(observations)}")
@@ -85,9 +78,8 @@ def build_features_from_observations(
     local_dt = obs_t0.timestamp_utc.astimezone(tz)
 
     hour = local_dt.hour
-    day_of_week = local_dt.weekday()  # Monday is 0, Sunday is 6 (same as pandas dt.dayofweek)
+    day_of_week = local_dt.weekday()  # Monday is 0, Sunday is 6
     month = local_dt.month
-    # day_of_year: calculate same as pandas dt.dayofyear (1-366)
     day_of_year = local_dt.timetuple().tm_yday
 
     feat_sin_hour = float(np.sin(2 * np.pi * hour / 24.0))
@@ -95,11 +87,11 @@ def build_features_from_observations(
     feat_sin_month = float(np.sin(2 * np.pi * month / 12.0))
     feat_cos_month = float(np.cos(2 * np.pi * month / 12.0))
 
-    feature_dict: Dict[str, Any] = {
-        "feat_hour": int(hour),
-        "feat_day_of_week": int(day_of_week),
-        "feat_month": int(month),
-        "feat_day_of_year": int(day_of_year),
+    feature_dict: Dict[str, float] = {
+        "feat_hour": float(hour),
+        "feat_day_of_week": float(day_of_week),
+        "feat_month": float(month),
+        "feat_day_of_year": float(day_of_year),
         "feat_sin_hour": feat_sin_hour,
         "feat_cos_hour": feat_cos_hour,
         "feat_sin_month": feat_sin_month,
@@ -112,15 +104,7 @@ def build_features_from_observations(
         feature_dict[f"feat_obs_{var}_lag1h"] = float(getattr(obs_t_minus_1, var))
         feature_dict[f"feat_obs_{var}_lag2h"] = float(getattr(obs_t_minus_2, var))
 
-    # Construct DataFrame in exact requested order
-    df = pd.DataFrame([feature_dict])
-
-    if expected_feature_order:
-        # Verify all expected columns are present
-        missing = set(expected_feature_order) - set(df.columns)
-        if missing:
-            raise ValueError(f"Generated features are missing expected columns: {missing}")
-        df = df[expected_feature_order]
-
-    return df
-
+    # Construct ordered array
+    order = expected_feature_order or EXPECTED_FEATURES
+    row = [feature_dict[f] for f in order]
+    return np.array([row], dtype=np.float32)
