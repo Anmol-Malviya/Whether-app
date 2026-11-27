@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import LocationSelector, { LocationOption } from "../LocationSelector";
-import { WeatherPulseLogo, NavTabIcon } from "./NavIcons";
+import { VayuDrishtiLogo, NavTabIcon } from "./NavIcons";
 import { NAV_ITEMS, NavigationProps } from "./nav-config";
 
 export default function TabletNavbar({
@@ -40,7 +40,7 @@ export default function TabletNavbar({
       >
         {/* Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <WeatherPulseLogo
+          <VayuDrishtiLogo
             onClick={() => {
               onTabChange("dashboard");
               setMenuOpen(false);

@@ -2,7 +2,7 @@
 
 import React from "react";
 import LocationSelector, { LocationOption } from "../LocationSelector";
-import { WeatherPulseLogo } from "./NavIcons";
+import { VayuDrishtiLogo } from "./NavIcons";
 import { NavigationProps } from "./nav-config";
 
 export default function MobileHeader({
@@ -42,7 +42,7 @@ export default function MobileHeader({
           boxSizing: "border-box",
         }}
       >
-        <WeatherPulseLogo onClick={() => onTabChange("dashboard")} />
+        <VayuDrishtiLogo onClick={() => onTabChange("dashboard")} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {/* Notification bell */}

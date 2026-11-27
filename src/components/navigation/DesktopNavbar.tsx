@@ -2,7 +2,7 @@
 
 import React from "react";
 import LocationSelector, { LocationOption } from "../LocationSelector";
-import { WeatherPulseLogo, NavTabIcon } from "./NavIcons";
+import { VayuDrishtiLogo, NavTabIcon } from "./NavIcons";
 import { NAV_ITEMS, NavigationProps } from "./nav-config";
 
 export default function DesktopNavbar({
@@ -38,7 +38,7 @@ export default function DesktopNavbar({
       >
         {/* Left: Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-          <WeatherPulseLogo onClick={() => onTabChange("dashboard")} />
+          <VayuDrishtiLogo onClick={() => onTabChange("dashboard")} />
 
           {activeTab === "shadow" && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
