@@ -1,9 +1,7 @@
-# Serving dependencies for FastAPI ML Prediction Service
+# Lean Serving dependencies for FastAPI ML Prediction Service on Vercel Serverless
 pandas>=2.0.0
 numpy>=1.24.0
-scikit-learn>=1.3.0
 xgboost>=2.0.0
-joblib>=1.3.0
 fastapi>=0.110.0
 pydantic>=2.5.0
 pydantic-settings>=2.0.0

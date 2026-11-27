@@ -1,0 +1,94 @@
+{
+  "features": [
+    "feat_hour",
+    "feat_day_of_week",
+    "feat_month",
+    "feat_day_of_year",
+    "feat_sin_hour",
+    "feat_cos_hour",
+    "feat_sin_month",
+    "feat_cos_month",
+    "feat_obs_temperature_2m_t0",
+    "feat_obs_temperature_2m_lag1h",
+    "feat_obs_temperature_2m_lag2h",
+    "feat_obs_relative_humidity_2m_t0",
+    "feat_obs_relative_humidity_2m_lag1h",
+    "feat_obs_relative_humidity_2m_lag2h",
+    "feat_obs_dew_point_2m_t0",
+    "feat_obs_dew_point_2m_lag1h",
+    "feat_obs_dew_point_2m_lag2h",
+    "feat_obs_precipitation_t0",
+    "feat_obs_precipitation_lag1h",
+    "feat_obs_precipitation_lag2h",
+    "feat_obs_wind_speed_10m_t0",
+    "feat_obs_wind_speed_10m_lag1h",
+    "feat_obs_wind_speed_10m_lag2h",
+    "feat_obs_wind_direction_10m_t0",
+    "feat_obs_wind_direction_10m_lag1h",
+    "feat_obs_wind_direction_10m_lag2h",
+    "feat_obs_surface_pressure_t0",
+    "feat_obs_surface_pressure_lag1h",
+    "feat_obs_surface_pressure_lag2h",
+    "feat_obs_cloud_cover_t0",
+    "feat_obs_cloud_cover_lag1h",
+    "feat_obs_cloud_cover_lag2h"
+  ],
+  "best_iteration": 149,
+  "model_type": "XGBRegressor",
+  "target": "target_obs_temperature_2m_lead1h",
+  "dataset_version": "ml-service\\data\\processed\\training_dataset.csv",
+  "versions": {
+    "python": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]",
+    "xgboost": "3.4.1",
+    "scikit_learn": "1.8.0",
+    "joblib": "1.5.3"
+  },
+  "metrics": {
+    "train": {
+      "model": {
+        "mae": 0.3636,
+        "rmse": 0.5308,
+        "r2": 0.9925,
+        "bias": -0.0
+      },
+      "persistence": {
+        "mae": 0.9503,
+        "rmse": 1.31,
+        "r2": 0.9545,
+        "bias": 0.0001
+      }
+    },
+    "validation": {
+      "model": {
+        "mae": 0.4563,
+        "rmse": 0.6716,
+        "r2": 0.9868,
+        "bias": -0.0338
+      },
+      "persistence": {
+        "mae": 0.9621,
+        "rmse": 1.3203,
+        "r2": 0.9489,
+        "bias": -0.0006
+      }
+    },
+    "test": {
+      "model": {
+        "mae": 0.4648,
+        "rmse": 0.684,
+        "r2": 0.987,
+        "bias": -0.0916
+      },
+      "persistence": {
+        "mae": 0.927,
+        "rmse": 1.2649,
+        "r2": 0.9557,
+        "bias": 0.0002
+      }
+    },
+    "test_improvement": {
+      "mae_improvement_pct": 49.86,
+      "rmse_improvement_pct": 45.92
+    }
+  }
+}

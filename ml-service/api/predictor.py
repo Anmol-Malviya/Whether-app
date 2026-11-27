@@ -1,7 +1,8 @@
 import logging
+import json
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
-import joblib
+from typing import Dict, Any, Optional
+import xgboost as xgb
 import pandas as pd
 from api.config import settings
 from api.schemas import PredictionRequest, PredictionResponse
@@ -13,88 +14,134 @@ logger = logging.getLogger("ml_service.predictor")
 
 class ModelPredictor:
     """
-    Manages loading and inference for the VayuDrishti observation-only ML models:
-    - Temperature regression model (lead 1h)
-    - Rain occurrence classification model (lead 1h)
+    Manages loading and inference for the VayuDrishti observation-only ML models
+    using native XGBoost Booster (lightweight, zero scikit-learn/scipy runtime bloat).
     """
 
     def __init__(self):
         self.temp_artifact: Optional[Dict[str, Any]] = None
         self.rain_artifact: Optional[Dict[str, Any]] = None
-        self.temp_model = None
-        self.rain_model = None
+        self._temp_booster: Optional[xgb.Booster] = None
+        self._rain_booster: Optional[xgb.Booster] = None
+        self.temp_best_iteration: Optional[int] = None
+        self.rain_best_iteration: Optional[int] = None
         self.features = []
         self.rain_threshold: float = 0.5
         self.is_loaded: bool = False
 
+    @property
+    def temp_model(self):
+        return self._temp_booster
+
+    @property
+    def rain_model(self):
+        return self._rain_booster
+
+    @property
+    def temp_booster(self):
+        return self._temp_booster
+
+    @temp_booster.setter
+    def temp_booster(self, val):
+        self._temp_booster = val
+
+    @property
+    def rain_booster(self):
+        return self._rain_booster
+
+    @rain_booster.setter
+    def rain_booster(self, val):
+        self._rain_booster = val
+
+    def _resolve_path(self, filename: str) -> Path:
+        """Resolves path across different runtimes and deployment structures."""
+        candidates = [
+            Path("ml-service/models") / filename,
+            Path("models") / filename,
+            Path(__file__).resolve().parent.parent / "models" / filename,
+        ]
+        for p in candidates:
+            if p.exists():
+                return p
+        return candidates[0]
+
     def load_models(self) -> None:
         """
-        Loads models from disk configured in settings.
-        Maintains model configuration, versions, and validation-selected rain threshold.
-        Supports both workspace-root and ml-service subfolder working directories.
+        Loads native XGBoost booster models and JSON metadata.
+        Falls back to .joblib if JSON booster not found (for local backwards compatibility).
         """
-        temp_path = Path(settings.TEMPERATURE_MODEL_PATH)
-        rain_path = Path(settings.RAIN_MODEL_PATH)
+        temp_json = self._resolve_path("temperature_booster.json")
+        rain_json = self._resolve_path("rain_booster.json")
+        temp_meta_path = self._resolve_path("temperature_meta.json")
+        rain_meta_path = self._resolve_path("rain_meta.json")
 
-        # Fallback if launched from ml-service/ directly
-        if not temp_path.exists() and (Path("models") / temp_path.name).exists():
-            temp_path = Path("models") / temp_path.name
-        if not rain_path.exists() and (Path("models") / rain_path.name).exists():
-            rain_path = Path("models") / rain_path.name
+        if temp_json.exists() and rain_json.exists():
+            logger.info(f"Loading native XGBoost boosters from {temp_json} and {rain_json}")
+            self.temp_booster = xgb.Booster()
+            self.temp_booster.load_model(str(temp_json))
 
-        # Fallback if launched from repo root
-        if not temp_path.exists() and (Path("ml-service/models") / temp_path.name).exists():
-            temp_path = Path("ml-service/models") / temp_path.name
-        if not rain_path.exists() and (Path("ml-service/models") / rain_path.name).exists():
-            rain_path = Path("ml-service/models") / rain_path.name
+            self.rain_booster = xgb.Booster()
+            self.rain_booster.load_model(str(rain_json))
 
-        if not temp_path.exists():
-            raise FileNotFoundError(f"Temperature model artifact not found at {temp_path.resolve()}")
-        if not rain_path.exists():
-            raise FileNotFoundError(f"Rain model artifact not found at {rain_path.resolve()}")
+            with open(temp_meta_path, "r", encoding="utf-8") as f:
+                self.temp_artifact = json.load(f)
+            with open(rain_meta_path, "r", encoding="utf-8") as f:
+                self.rain_artifact = json.load(f)
 
-        logger.info(f"Loading temperature model from {temp_path}")
-        self.temp_artifact = joblib.load(temp_path)
-        self.temp_model = self.temp_artifact["model"]
+            self.temp_best_iteration = self.temp_artifact.get("best_iteration")
+            self.rain_best_iteration = self.rain_artifact.get("best_iteration")
+            self.features = self.temp_artifact.get("features", [])
+            self.rain_threshold = float(self.rain_artifact.get("selected_threshold", 0.5))
 
-        logger.info(f"Loading rain model from {rain_path}")
-        self.rain_artifact = joblib.load(rain_path)
-        self.rain_model = self.rain_artifact["model"]
+            logger.info(
+                f"Successfully loaded native boosters. Feature count: {len(self.features)}, "
+                f"Rain threshold: {self.rain_threshold}"
+            )
+            self.is_loaded = True
+            return
 
-        # Features and threshold
-        self.features = self.temp_artifact.get("features", [])
-        self.rain_threshold = float(self.rain_artifact.get("selected_threshold", 0.5))
-
-        logger.info(
-            f"Successfully loaded models. Feature count: {len(self.features)}, "
-            f"Rain threshold: {self.rain_threshold}"
-        )
-        self.is_loaded = True
+        # Fallback to joblib if available
+        try:
+            import joblib
+            temp_path = self._resolve_path("temperature_model_obs_only.joblib")
+            rain_path = self._resolve_path("rain_model_obs_only.joblib")
+            logger.info(f"Fallback loading from joblib artifacts: {temp_path}")
+            self.temp_artifact = joblib.load(temp_path)
+            self.rain_artifact = joblib.load(rain_path)
+            self.temp_booster = self.temp_artifact["model"].get_booster()
+            self.rain_booster = self.rain_artifact["model"].get_booster()
+            self.temp_best_iteration = getattr(self.temp_artifact["model"], "best_iteration", None)
+            self.rain_best_iteration = getattr(self.rain_artifact["model"], "best_iteration", None)
+            self.features = self.temp_artifact.get("features", [])
+            self.rain_threshold = float(self.rain_artifact.get("selected_threshold", 0.5))
+            self.is_loaded = True
+        except Exception as e:
+            raise FileNotFoundError(f"Failed to load ML models (native booster or joblib): {e}")
 
     def get_info(self) -> Dict[str, Any]:
         """Returns model info, target horizons, feature count, and selected rain threshold."""
-        if not self.is_loaded:
+        if not self.is_loaded or not self.temp_artifact or not self.rain_artifact:
             return {"status": "unloaded"}
 
         return {
             "temperature_model": {
-                "model_type": self.temp_artifact.get("model_type"),
+                "model_type": self.temp_artifact.get("model_type", "XGBRegressor"),
                 "target_horizon": "1h",
-                "target_variable": self.temp_artifact.get("target"),
-                "feature_count": len(self.temp_artifact.get("features", [])),
-                "features": self.temp_artifact.get("features", []),
-                "dataset_version": self.temp_artifact.get("dataset_version"),
+                "target_variable": self.temp_artifact.get("target", "temperature"),
+                "feature_count": len(self.features),
+                "features": self.features,
+                "dataset_version": self.temp_artifact.get("dataset_version", "1.0"),
                 "versions": self.temp_artifact.get("versions", {}),
                 "metrics": self.temp_artifact.get("metrics", {})
             },
             "rain_model": {
-                "model_type": self.rain_artifact.get("model_type"),
+                "model_type": self.rain_artifact.get("model_type", "XGBClassifier"),
                 "target_horizon": "1h",
-                "target_variable": self.rain_artifact.get("target"),
-                "feature_count": len(self.rain_artifact.get("features", [])),
-                "features": self.rain_artifact.get("features", []),
+                "target_variable": self.rain_artifact.get("target", "rain_occurrence"),
+                "feature_count": len(self.features),
+                "features": self.features,
                 "selected_rain_threshold": self.rain_threshold,
-                "dataset_version": self.rain_artifact.get("dataset_version"),
+                "dataset_version": self.rain_artifact.get("dataset_version", "1.0"),
                 "versions": self.rain_artifact.get("versions", {}),
                 "metrics": self.rain_artifact.get("metrics", {})
             }
@@ -102,13 +149,13 @@ class ModelPredictor:
 
     def predict(self, request: PredictionRequest) -> PredictionResponse:
         """
-        Executes prediction pipeline:
+        Executes prediction pipeline using native XGBoost Booster:
         1. Verifies models are loaded
         2. Builds 32 model features from 3 hourly observations
         3. Predicts next-hour temperature
         4. Predicts rain occurrence probability and evaluates against validation threshold
         """
-        if not self.is_loaded or self.temp_model is None or self.rain_model is None:
+        if not self.is_loaded or self.temp_booster is None or self.rain_booster is None:
             raise RuntimeError("ML models are not loaded or currently unavailable.")
 
         # Build exactly the 32 model features in the saved order
@@ -118,13 +165,15 @@ class ModelPredictor:
             timezone_str=settings.LOCAL_TIMEZONE
         )
 
+        dmatrix = xgb.DMatrix(X, enable_categorical=True)
+
         # Temperature prediction (Celsius)
-        temp_pred = float(self.temp_model.predict(X)[0])
+        temp_iter = (0, self.temp_best_iteration + 1) if self.temp_best_iteration is not None else (0, 0)
+        temp_pred = float(self.temp_booster.predict(dmatrix, iteration_range=temp_iter)[0])
 
         # Rain prediction (Probability + Classification)
-        proba = self.rain_model.predict_proba(X)
-        # Class 1 is rain occurrence
-        rain_prob = float(proba[0][1])
+        rain_iter = (0, self.rain_best_iteration + 1) if self.rain_best_iteration is not None else (0, 0)
+        rain_prob = float(self.rain_booster.predict(dmatrix, iteration_range=rain_iter)[0])
         rain_class = bool(rain_prob >= self.rain_threshold)
 
         # Timestamps
@@ -134,9 +183,9 @@ class ModelPredictor:
         prediction_timestamp_utc = datetime.now(timezone.utc)
 
         model_version = {
-            "temperature_model_type": self.temp_artifact.get("model_type"),
-            "rain_model_type": self.rain_artifact.get("model_type"),
-            "dataset_version": self.temp_artifact.get("dataset_version"),
+            "temperature_model_type": self.temp_artifact.get("model_type", "XGBRegressor"),
+            "rain_model_type": self.rain_artifact.get("model_type", "XGBClassifier"),
+            "dataset_version": self.temp_artifact.get("dataset_version", "1.0"),
             "system_versions": self.temp_artifact.get("versions", {}),
         }
 
@@ -152,4 +201,3 @@ class ModelPredictor:
 
 
 predictor = ModelPredictor()
-
